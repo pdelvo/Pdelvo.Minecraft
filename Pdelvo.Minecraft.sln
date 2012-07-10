@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pdelvo.Minecraft.Protocol", "Pdelvo.Minecraft.Protocol\Pdelvo.Minecraft.Protocol.csproj", "{15181DED-BE43-47F9-A543-0B40F4F17A27}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pdelvo.Minecraft.Network", "Pdelvo.Minecraft.Network\Pdelvo.Minecraft.Network.csproj", "{8291168C-FF6F-47F8-B166-9B5D551E7BCA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{15181DED-BE43-47F9-A543-0B40F4F17A27}.Release|x86.ActiveCfg = Release|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|x86.ActiveCfg = Release|Any CPU
+
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{15181DED-BE43-47F9-A543-0B40F4F17A27} = {CB1F716D-AE97-4D84-92A6-834B83DB6382}
+		{8291168C-FF6F-47F8-B166-9B5D551E7BCA} = {CB1F716D-AE97-4D84-92A6-834B83DB6382}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		BuildVersion_UpdateAssemblyVersion = False
+		BuildVersion_UpdateFileVersion = False
+	EndGlobalSection
+EndGlobal

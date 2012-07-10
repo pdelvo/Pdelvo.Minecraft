@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{15181DED-BE43-47F9-A543-0B40F4F17A27}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Pdelvo.Minecraft.Protocol</RootNamespace>
+    <AssemblyName>Pdelvo.Minecraft.Protocol</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>protocolKey.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DelaySign>true</DelaySign>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="IKVM.OpenJDK.Core, Version=7.0.4335.0, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Pdelvo.Minecraft.Network\IKVM.OpenJDK.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.OpenJDK.Security, Version=7.0.4335.0, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Pdelvo.Minecraft.Network\IKVM.OpenJDK.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.OpenJDK.Util, Version=7.0.4335.0, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Pdelvo.Minecraft.Network\IKVM.OpenJDK.Util.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ClientRemoteInterface.cs" />
+    <Compile Include="EnchantHelper.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="NetworkExtensions.cs" />
+    <Compile Include="Helper\ProtocolExtensions.cs" />
+    <Compile Include="Helper\Dieable.cs" />
+    <Compile Include="Helper\LockFreeQueue.cs" />
+    <Compile Include="Helper\ProtocolHelper.cs" />
+    <Compile Include="Helper\ProtocolInformation.cs" />
+    <Compile Include="IMinecraftRemoteInterface.cs" />
+    <Compile Include="LastSupportedVersionAttribute.cs" />
+    <Compile Include="PacketEndPoint.cs" />
+    <Compile Include="PacketEventArgs.cs" />
+    <Compile Include="PacketException.cs" />
+    <Compile Include="PacketFactory.cs" />
+    <Compile Include="Packets\AbilityPacket.cs" />
+    <Compile Include="Packets\AddObject.cs" />
+    <Compile Include="Packets\Animation.cs" />
+    <Compile Include="Packets\AttachEntity.cs" />
+    <Compile Include="Packets\AutoCompletion.cs" />
+    <Compile Include="Packets\BlockAction.cs" />
+    <Compile Include="Packets\BlockChange.cs" />
+    <Compile Include="Packets\ChatPacket.cs" />
+    <Compile Include="Packets\CloseWindow.cs" />
+    <Compile Include="Packets\CollectItem.cs" />
+    <Compile Include="Packets\CreativeInventoryAction.cs" />
+    <Compile Include="Packets\DiggingProgressPacket.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Packets\DisconnectPacket.cs" />
+    <Compile Include="Packets\EmptyPacket.cs" />
+    <Compile Include="Packets\EnchantItem.cs" />
+    <Compile Include="Packets\EncryptionKeyRequest.cs" />
+    <Compile Include="Packets\EncryptionKeyResponse.cs" />
+    <Compile Include="Packets\Entity.cs" />
+    <Compile Include="Packets\EntityAction.cs" />
+    <Compile Include="Packets\EntityDestroy.cs" />
+    <Compile Include="Packets\EntityEffect.cs" />
+    <Compile Include="Packets\EntityEquipment.cs" />
+    <Compile Include="Packets\EntityHeadLook.cs" />
+    <Compile Include="Packets\EntityLook.cs" />
+    <Compile Include="Packets\EntityLookAndRelativeMove.cs" />
+    <Compile Include="Packets\EntityMetadata.cs" />
+    <Compile Include="Packets\EntityPainting.cs" />
+    <Compile Include="Packets\EntityRelativeMove.cs" />
+    <Compile Include="Packets\EntityStatus.cs" />
+    <Compile Include="Packets\EntityTeleport.cs" />
+    <Compile Include="Packets\EntityVelocity.cs" />
+    <Compile Include="Packets\Experience.cs" />
+    <Compile Include="Packets\ExperienceOrb.cs" />
+    <Compile Include="Packets\Explosion.cs" />
+    <Compile Include="Packets\HandshakeRequest.cs" />
+    <Compile Include="Packets\HandshakeResponse.cs" />
+    <Compile Include="Packets\HoldingChange.cs" />
+    <Compile Include="Packets\IncrementStatistic.cs" />
+    <Compile Include="Packets\InvalidState.cs" />
+    <Compile Include="Packets\InventoryPacket.cs" />
+    <Compile Include="Packets\ItemData.cs" />
+    <Compile Include="Packets\ItemStack.cs" />
+    <Compile Include="Packets\KeepAlive.cs" />
+    <Compile Include="Packets\LogOnRequest.cs" />
+    <Compile Include="Packets\LogOnResponse.cs" />
+    <Compile Include="Packets\MapChunk.cs" />
+    <Compile Include="Packets\MapChunkOld.cs" />
+    <Compile Include="Packets\MetadataInfo.cs" />
+    <Compile Include="Packets\MobSpawn.cs" />
+    <Compile Include="Packets\MultiBlockChange.cs" />
+    <Compile Include="Packets\MultiBlockChangeOld.cs" />
+    <Compile Include="Packets\NamedEntitySpawn.cs" />
+    <Compile Include="Packets\NamedSoundEffect.cs" />
+    <Compile Include="Packets\OpenWindow.cs" />
+    <Compile Include="Packets\Packet.cs" />
+    <Compile Include="Packets\PickupSpawn.cs" />
+    <Compile Include="Packets\Player.cs" />
+    <Compile Include="Packets\PlayerBlockPlacement.cs" />
+    <Compile Include="Packets\PlayerDigging.cs" />
+    <Compile Include="Packets\PlayerListItem.cs" />
+    <Compile Include="Packets\PlayerListPing.cs" />
+    <Compile Include="Packets\PlayerLook.cs" />
+    <Compile Include="Packets\PlayerPosition.cs" />
+    <Compile Include="Packets\PlayerPositionLookRequest.cs" />
+    <Compile Include="Packets\PlayerPositionLookResponse.cs" />
+    <Compile Include="Packets\PluginMessage.cs" />
+    <Compile Include="Packets\PreChunk.cs" />
+    <Compile Include="Packets\RemoveEntityEffect.cs" />
+    <Compile Include="Packets\Respawn.cs" />
+    <Compile Include="Packets\RespawnRequestPacket.cs" />
+    <Compile Include="Packets\SetSlot.cs" />
+    <Compile Include="Packets\SettingsChanged.cs" />
+    <Compile Include="Packets\SoundEffect.cs" />
+    <Compile Include="Packets\SpawnPosition.cs" />
+    <Compile Include="Packets\StanceUpdate.cs" />
+    <Compile Include="Packets\Thunderbolt.cs" />
+    <Compile Include="Packets\TimeUpdatePacket.cs" />
+    <Compile Include="Packets\Transaction.cs" />
+    <Compile Include="Packets\UnknownPacket.cs" />
+    <Compile Include="Packets\UpdateHealth.cs" />
+    <Compile Include="Packets\UpdateMobSpawner.cs" />
+    <Compile Include="Packets\UpdateProgressBar.cs" />
+    <Compile Include="Packets\UpdateSign.cs" />
+    <Compile Include="Packets\UseBed.cs" />
+    <Compile Include="Packets\UseEntity.cs" />
+    <Compile Include="Packets\WindowClick.cs" />
+    <Compile Include="Packets\WindowItems.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RemoteInterface.cs" />
+    <Compile Include="RemoteInterfaceAbortedEventArgs.cs" />
+    <Compile Include="RequireVersionAttribute.cs" />
+    <Compile Include="ServerRemoteInterface.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Pdelvo.Minecraft.Network\Pdelvo.Minecraft.Network.csproj">
+      <Project>{8291168C-FF6F-47F8-B166-9B5D551E7BCA}</Project>
+      <Name>Pdelvo.Minecraft.Network</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="protocolKey.snk" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
