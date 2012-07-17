@@ -36,9 +36,9 @@ namespace Pdelvo.Minecraft.Network
             set
             {
                 _key = value;
-                _encrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesEngine(), 8));
+                _encrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
                 _encrypter.Init(true, new ParametersWithIV(new KeyParameter(Key.getEncoded()), Key.getEncoded(), 0, 16));
-                _decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesEngine(), 8));
+                _decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
                 _decrypter.Init(false, new ParametersWithIV(new KeyParameter(Key.getEncoded()), Key.getEncoded(), 0, 16));
             }
         }

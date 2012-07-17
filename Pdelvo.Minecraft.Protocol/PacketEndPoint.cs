@@ -277,7 +277,13 @@ namespace Pdelvo.Minecraft.Protocol
             {
                 lock (CustomAttributes)
                     if (!CustomAttributes.ContainsKey(packet))
+                    {
                         CustomAttributes.Add(packet, attributes = Attribute.GetCustomAttributes(packet));
+                    }
+                    else
+                    {
+                        attributes = CustomAttributes[packet];
+                    }
             }
             var requireVersion = (RequireVersionAttribute) attributes.FirstOrDefault(a => a is RequireVersionAttribute);
             if (requireVersion == null)

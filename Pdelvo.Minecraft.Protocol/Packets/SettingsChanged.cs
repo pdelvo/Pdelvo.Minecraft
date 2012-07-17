@@ -11,8 +11,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     {
         public string Language { get; set; }
         public int ViewDistance { get; set; }
-        public byte Unknown { get; set; }
-        public byte Unknown2 { get; set; }
+        public ChatFlags ChatOptions { get; set; }
+        public byte Difficulty { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmptyPacket"/> class.
@@ -39,9 +39,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             else
                 ViewDistance = reader.ReadInt32();
             if (version >= 31)
-                Unknown = reader.ReadByte();
+                ChatOptions = (ChatFlags)reader.ReadByte();
             if (version >= 32)
-                Unknown2 = reader.ReadByte();
+                Difficulty = reader.ReadByte();
         }
 
         /// <summary>
@@ -61,9 +61,18 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             else
                 writer.Write(ViewDistance);
             if (version >= 31)
-                writer.Write(Unknown);
+                writer.Write((byte)ChatOptions);
             if (version >= 32)
-                writer.Write(Unknown2);
+                writer.Write(Difficulty);
         }
+    }
+
+    [Flags]
+    public enum ChatFlags : byte
+    {
+        Enabled = 0x00,
+        CommandsOnly = 0x01,
+        Hidden = 0x02,
+        ColorsEnabled = 0x04
     }
 }

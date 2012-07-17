@@ -162,7 +162,7 @@
     <Compile Include="Packets\Thunderbolt.cs" />
     <Compile Include="Packets\TimeUpdatePacket.cs" />
     <Compile Include="Packets\Transaction.cs" />
-    <Compile Include="Packets\UnknownPacket.cs" />
+    <Compile Include="Packets\MapChunkBulkPacket.cs" />
     <Compile Include="Packets\UpdateHealth.cs" />
     <Compile Include="Packets\UpdateMobSpawner.cs" />
     <Compile Include="Packets\UpdateProgressBar.cs" />

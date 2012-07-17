@@ -13,7 +13,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     public class MapChunkBulkPacket : Packet
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EmptyPacket"/> class.
+        /// Initializes a new instance of the <see cref="MapChunkBulkPacket"/> class.
         /// </summary>
         /// <remarks></remarks>
         public MapChunkBulkPacket()
