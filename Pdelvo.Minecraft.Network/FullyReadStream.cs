@@ -64,13 +64,13 @@ namespace Pdelvo.Minecraft.Network
         public override int Read(byte[] buffer, int offset, int count)
         {
             int bytesRead = 0;
-            int bytesRequired = count - bytesRead;
             while (bytesRead < count)
             {
                 int readAheadAvailableBytes = _readAheadLength - _readAheadOffset;
 
                 if (readAheadAvailableBytes > 0)
                 {
+                    int bytesRequired = count - bytesRead;
                     int toCopy = Math.Min(readAheadAvailableBytes, bytesRequired);
                     //Array.Copy(readAheadBuffer, readAheadOffset, buffer, offset + bytesRead, toCopy);
                     Buffer.BlockCopy(_readAheadBuffer, _readAheadOffset, buffer, offset + bytesRead, toCopy);
@@ -79,7 +79,7 @@ namespace Pdelvo.Minecraft.Network
                 }
                 else
                 {
-                    ReadData(bytesRequired);
+                    ReadData(count);
                 }
             }
             _pos += bytesRead;
