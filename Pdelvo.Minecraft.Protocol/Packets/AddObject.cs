@@ -51,9 +51,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <summary>
         /// Gets or sets the fireball thrower.
         /// </summary>
-        /// <value>The fireball thrower.</value>
+        /// <value>Aditional Object Data.</value>
         /// <remarks></remarks>
-        public int FireballThrower { get; set; }
+        public int ObjectData { get; set; }
         /// <summary>
         /// Gets or sets the unknown X.
         /// </summary>
@@ -88,7 +88,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             PositionX = reader.ReadInt32();
             PositionY = reader.ReadInt32();
             PositionZ = reader.ReadInt32();
-            if ((FireballThrower = reader.ReadInt32()) > 0)
+            if ((ObjectData = reader.ReadInt32()) > 0)
             {
                 UnknownX = reader.ReadInt16();
                 UnknownY = reader.ReadInt16();
@@ -112,8 +112,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(PositionX);
             writer.Write(PositionY);
             writer.Write(PositionZ);
-            writer.Write(FireballThrower);
-            if (FireballThrower > 0)
+            writer.Write(ObjectData);
+            if (ObjectData > 0)
             {
                 writer.Write(UnknownX);
                 writer.Write(UnknownY);
