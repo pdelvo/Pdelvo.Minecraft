@@ -8,6 +8,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Pdelvo.Minecraft.Protocol.Helper;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Pdelvo.Minecraft.Protocol
 {
@@ -17,10 +19,10 @@ namespace Pdelvo.Minecraft.Protocol
     /// <remarks></remarks>
     public abstract class RemoteInterface : IMinecraftRemoteInterface, IDisposable
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        protected Thread Thread { get; set; }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //protected Thread Thread { get; set; }
 
         /// <summary>
         /// 
@@ -30,6 +32,11 @@ namespace Pdelvo.Minecraft.Protocol
         LockFreeQueue<Dieable<Packet>> _fastQueue = new LockFreeQueue<Dieable<Packet>>();
         LockFreeQueue<Dieable<Packet>> _slowQueue = new LockFreeQueue<Dieable<Packet>>();
 
+        ActionBlock<Packet> _packetSender;
+        ActionBlock<Packet> _priorityChooser;
+        BufferBlock<Packet> _highPriorityBuffer;
+        BufferBlock<Packet> _lowPriorityBuffer;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="RemoteInterface"/> class.
         /// </summary>
@@ -37,8 +44,37 @@ namespace Pdelvo.Minecraft.Protocol
         /// <remarks></remarks>
         protected RemoteInterface(PacketEndPoint endPoint)
         {
-            Thread = new Thread(WriteLoop);
+            //Thread = new Thread(WriteLoop);
             EndPoint = endPoint;
+
+            SetupMessageChain();
+        }
+
+        private void SetupMessageChain()
+        {
+            _highPriorityBuffer = new BufferBlock<Packet>();
+            _lowPriorityBuffer = new BufferBlock<Packet>();
+            _priorityChooser = new ActionBlock<Packet>(async p =>
+            {
+                if (p.CanBeDelayed)
+                    await _lowPriorityBuffer.SendAsync(p);
+                else
+                    await _highPriorityBuffer.SendAsync(p);
+            });
+            _priorityChooser.Completion.ContinueWith(a =>
+            {
+                _lowPriorityBuffer.Complete();
+                _highPriorityBuffer.Complete();
+            });
+            _packetSender = new ActionBlock<Packet>(async p =>
+            {
+                await SendPacketAsync(p);
+                if (_highPriorityBuffer.Completion.IsCompleted && _lowPriorityBuffer.Completion.IsCompleted)
+                    _packetSender.Complete();
+            });
+
+            _lowPriorityBuffer.LinkTo(_packetSender, new DataflowLinkOptions { PropagateCompletion = true });
+            _highPriorityBuffer.LinkTo(_packetSender, new DataflowLinkOptions { PropagateCompletion = true });
         }
 
         #region IMinecraftRemoteInterface Members
@@ -48,11 +84,32 @@ namespace Pdelvo.Minecraft.Protocol
         /// </summary>
         /// <param name="packet">The packet.</param>
         /// <remarks></remarks>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification="The general exception is passed to a event")]
-        public void SendPacket(Packet packet)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "The general exception is passed to a event")]
+        [Obsolete]
+        private void SendPacket(Packet packet)
         {
-            try{
+            try
+            {
                 EndPoint.SendPacket(packet);
+            }
+            catch (ThreadAbortException)
+            {
+                if (Aborted != null)
+                    Aborted(this, new RemoteInterfaceAbortedEventArgs());
+            }
+            catch (Exception ex)
+            {
+                if (Aborted != null)
+                    Aborted(this, new RemoteInterfaceAbortedEventArgs(ex));
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "The general exception is passed to a event")]
+        public async Task SendPacketAsync(Packet packet)
+        {
+            try
+            {
+                await EndPoint.SendPacketAsync(packet);
             }
             catch (ThreadAbortException)
             {
@@ -70,12 +127,34 @@ namespace Pdelvo.Minecraft.Protocol
         /// Runs this instance.
         /// </summary>
         /// <remarks></remarks>
-        public void Run()
+        public async Task Run()
         {
-            if (Thread.ThreadState == System.Threading.ThreadState.Running)
-                throw new InvalidOperationException("Thread already running");
-            BeginReceivePacket();
-            Thread.Start();
+            try
+            {
+                while (true)
+                {
+                    byte packetId = await EndPoint.Stream.ReadByteAsync();
+                    Packet p = await EndPoint.ReadPacketAsync(packetId);
+                    if (EndPoint.Stream.BufferEnabled)
+                        p.Data = EndPoint.Stream.GetBuffer();
+                    if (PacketReceived != null)
+                        PacketReceived(this, new PacketEventArgs(p));
+                }
+            }
+            catch (ThreadAbortException)
+            {
+                if (Aborted != null)
+                    Aborted(this, new RemoteInterfaceAbortedEventArgs());
+            }
+            catch (Exception ex)
+            {
+                if (Aborted != null)
+                    Aborted(this, new RemoteInterfaceAbortedEventArgs(ex));
+            }
+            //if (Thread.ThreadState == System.Threading.ThreadState.Running)
+            //    throw new InvalidOperationException("Thread already running");
+            //BeginReceivePacket();
+            //Thread.Start();
         }
 
         /// <summary>
@@ -119,6 +198,8 @@ namespace Pdelvo.Minecraft.Protocol
                 if (Aborted != null)
                     Aborted(this, new RemoteInterfaceAbortedEventArgs());
             }
+            _priorityChooser.Complete();
+            _packetSender.Completion.Wait();
             EndPoint.Shutdown();
         }
 
@@ -152,118 +233,122 @@ namespace Pdelvo.Minecraft.Protocol
 
         AutoResetEvent _writeEvent = new AutoResetEvent(false);
 
-        private void WriteLoop()
-        {
-            while (true)
-            {
-                _writeEvent.WaitOne();
-                if (_aborting) return;
-                Dieable<Packet> packet;
+        //private void WriteLoop()
+        //{
+        //    while (true)
+        //    {
+        //        _writeEvent.WaitOne();
+        //        if (_aborting) return;
+        //        Dieable<Packet> packet;
                
-                if (_fastQueue.TryDequeue(out packet))
-                {
-                    //write data
-                    _writeEvent.Set();
-                    if (!packet.IsDead)
-                    SendPacket(packet);
-                }
-                if (packet == null)
-                {
-                    if (_slowQueue.TryDequeue(out packet))
-                    {
-                        //write data
-                        _writeEvent.Set();
-                        if (!packet.IsDead)
-                            SendPacket(packet);
-                        //else Debug.WriteLine("Packet dropped");
-                    }
-                }
-            }
-        }
-
-        public void SendPacketQueued(Packet packet, bool fast)
+        //        if (_fastQueue.TryDequeue(out packet))
+        //        {
+        //            //write data
+        //            _writeEvent.Set();
+        //            if (!packet.IsDead)
+        //            SendPacket(packet);
+        //        }
+        //        if (packet == null)
+        //        {
+        //            if (_slowQueue.TryDequeue(out packet))
+        //            {
+        //                //write data
+        //                _writeEvent.Set();
+        //                if (!packet.IsDead)
+        //                    SendPacket(packet);
+        //                //else Debug.WriteLine("Packet dropped");
+        //            }
+        //        }
+        //    }
+        //}
+        public Task SendPacketQueuedAsync(Packet packet)
         {
-            if (fast)
-            {
-                _fastQueue.Enqueue(packet);
-                _writeEvent.Set();
-            }
-            else
-            {
-                var pc = packet as PreChunk;
-                var mc = packet as MapChunk;
-                if (mc != null)
-                {
-                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r => 
-                    { 
-                        var mapChunk = r as MapChunk;
-                        return mapChunk.PositionX == mc.PositionX && mapChunk.PositionZ == mc.PositionZ; 
-                    }));
-                    //_slowQueue.EnumerateItems().Where(t => t.Item is PreChunk).Each(a => a.Die(r => (r as PreChunk).X == mc.X && (r as PreChunk).Z == mc.Z));
-                } 
-                else if (pc != null)
-                {
-                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
-                    {
-                        var mapChunk = r as MapChunk;
-                        return mapChunk.PositionX == pc.PositionX && mapChunk.PositionZ == pc.PositionZ;
-                    }));
-                }
-
-                _slowQueue.Enqueue(packet);
-                _writeEvent.Set();
-            }
+            return _priorityChooser.SendAsync(packet);
         }
-
         public void SendPacketQueued(Packet packet)
         {
-            if (packet == null)
-                throw new ArgumentNullException("packet");
-            SendPacketQueued(packet, !packet.CanBeDelayed);
+            _priorityChooser.Post(packet);
+            //if (fast)
+            //{
+            //    _fastQueue.Enqueue(packet);
+            //    _writeEvent.Set();
+            //}
+            //else
+            //{
+            //    var pc = packet as PreChunk;
+            //    var mc = packet as MapChunk;
+            //    if (mc != null)
+            //    {
+            //        _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r => 
+            //        { 
+            //            var mapChunk = r as MapChunk;
+            //            return mapChunk.PositionX == mc.PositionX && mapChunk.PositionZ == mc.PositionZ; 
+            //        }));
+            //        //_slowQueue.EnumerateItems().Where(t => t.Item is PreChunk).Each(a => a.Die(r => (r as PreChunk).X == mc.X && (r as PreChunk).Z == mc.Z));
+            //    } 
+            //    else if (pc != null)
+            //    {
+            //        _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
+            //        {
+            //            var mapChunk = r as MapChunk;
+            //            return mapChunk.PositionX == pc.PositionX && mapChunk.PositionZ == pc.PositionZ;
+            //        }));
+            //    }
+
+            //    _slowQueue.Enqueue(packet);
+            //    _writeEvent.Set();
+            //}
         }
+
+        //public void SendPacketQueued(Packet packet)
+        //{
+        //    if (packet == null)
+        //        throw new ArgumentNullException("packet");
+        //    SendPacketQueued(packet, !packet.CanBeDelayed);
+        //}
 
         /// <summary>
         /// Begins the receive packet.
         /// </summary>
         /// <remarks></remarks>
-        private void BeginReceivePacket()
-        {
-            var buff = new byte[1];
-            EndPoint.Stream.BeginRead(buff, 0, 1, ReadCompleted, buff);
-        }
+        //private void BeginReceivePacket()
+        //{
+        //    var buff = new byte[1];
+        //    EndPoint.Stream.BeginRead(buff, 0, 1, ReadCompleted, buff);
+        //}
 
         /// <summary>
         /// Reads the completed.
         /// </summary>
         /// <param name="a">A.</param>
         /// <remarks></remarks>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification="Exception is redirected to a event")]
-        private void ReadCompleted(IAsyncResult a)
-        {
-            if (a.IsCompleted)
-            {
-            try
-            {
-                EndPoint.Stream.EndRead(a);
-                Packet p = EndPoint.ReadPacket(((byte[]) a.AsyncState)[0]);
-                if (EndPoint.Stream.BufferEnabled)
-                    p.Data = EndPoint.Stream.GetBuffer();
-                if (PacketReceived != null)
-                    PacketReceived(this, new PacketEventArgs(p));
-                BeginReceivePacket();
-            }
-            catch (ThreadAbortException)
-            {
-                if (Aborted != null)
-                    Aborted(this, new RemoteInterfaceAbortedEventArgs());
-            }
-            catch (Exception ex)
-            {
-                if (Aborted != null)
-                    Aborted(this, new RemoteInterfaceAbortedEventArgs(ex));
-            }
-            }
-        }
+        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification="Exception is redirected to a event")]
+        //private void ReadCompleted(IAsyncResult a)
+        //{
+        //    if (a.IsCompleted)
+        //    {
+        //    try
+        //    {
+        //        EndPoint.Stream.EndRead(a);
+        //        Packet p = EndPoint.ReadPacket(((byte[]) a.AsyncState)[0]);
+        //        if (EndPoint.Stream.BufferEnabled)
+        //            p.Data = EndPoint.Stream.GetBuffer();
+        //        if (PacketReceived != null)
+        //            PacketReceived(this, new PacketEventArgs(p));
+        //        BeginReceivePacket();
+        //    }
+        //    catch (ThreadAbortException)
+        //    {
+        //        if (Aborted != null)
+        //            Aborted(this, new RemoteInterfaceAbortedEventArgs());
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        if (Aborted != null)
+        //            Aborted(this, new RemoteInterfaceAbortedEventArgs(ex));
+        //    }
+        //    }
+        //}
 
         /// <summary>
         /// Reads the packet.
@@ -274,6 +359,17 @@ namespace Pdelvo.Minecraft.Protocol
         public Packet ReadPacket()
         {
             Packet p = EndPoint.ReadPacket();
+            if (EndPoint.Stream.BufferEnabled)
+                p.Data = EndPoint.Stream.GetBuffer();
+            if (PacketReceived != null)
+                PacketReceived(this, new PacketEventArgs(p));
+            return p;
+        }
+
+        [DebuggerStepThrough]
+        public async Task<Packet> ReadPacketAsync()
+        {
+            Packet p = await EndPoint.ReadPacketAsync();
             if (EndPoint.Stream.BufferEnabled)
                 p.Data = EndPoint.Stream.GetBuffer();
             if (PacketReceived != null)

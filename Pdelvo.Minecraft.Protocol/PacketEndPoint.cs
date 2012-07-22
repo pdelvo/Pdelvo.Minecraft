@@ -5,6 +5,8 @@ using Pdelvo.Minecraft.Protocol.Helper;
 using Pdelvo.Minecraft.Protocol.Packets;
 using Pdelvo.Minecraft.Network;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Pdelvo.Minecraft.Protocol
 {
@@ -215,6 +217,57 @@ namespace Pdelvo.Minecraft.Protocol
             }
         }
 
+        public async Task<Packet> ReadPacketAsync(byte id, bool useLock = true)
+        {
+            //if (useLock)
+            //    Monitor.Enter(_readLock);
+            //try
+            //{
+                if (!_packets.ContainsKey(id))
+                    throw new PacketException(id);
+
+                IEnumerable<Type> packets = from b in _packets[id]
+                                            where PacketSupportVersion(b) == true
+                                            //because it is nullable bool
+                                            select b;
+                Type packet = packets.First();
+                Packet p;
+                if (UseCache)
+                {
+                    if (!PacketCache.ContainsKey(packet))
+                    {
+                        lock (PacketCache)
+                        {
+                            if (!PacketCache.ContainsKey(packet))
+                            {
+                                PacketCache.Add(packet, new LockFreeQueue<Packet>());
+                            }
+                        }
+                    }
+                    LockFreeQueue<Packet> queue = PacketCache[packet];
+                    if (!queue.TryDequeue(out p))
+                    {
+                        PacketFactory.PacketCreator creator = PacketFactory.GetCreator(packet);
+                        p = creator();
+                    }
+                }
+                else
+                {
+                    PacketFactory.PacketCreator creator = PacketFactory.GetCreator(packet);
+                    p = creator();
+                }
+                await p.ReceiveAsync(_innerStream, Version);
+                p.Cache = true;
+                p.Data = _innerStream.GetBuffer();
+                return p;
+            //}
+            //finally
+            //{
+            //    if (useLock)
+            //        Monitor.Exit(_readLock);
+            //}
+        }
+
         /// <summary>
         /// Reads the packet.
         /// </summary>
@@ -227,6 +280,21 @@ namespace Pdelvo.Minecraft.Protocol
             {
                 byte id = _innerStream.ReadByte();
                 return ReadPacket(id);
+            }
+        }
+
+        [DebuggerStepThrough]
+        public async Task<Packet> ReadPacketAsync()
+        {
+            Monitor.Enter(_readLock);
+            try
+            {
+                byte id = await _innerStream.ReadByteAsync();
+                return await ReadPacketAsync(id, false);
+            }
+            finally
+            {
+                Monitor.Exit(_readLock);
             }
         }
 
@@ -329,6 +397,7 @@ namespace Pdelvo.Minecraft.Protocol
         /// </summary>
         /// <param name="packet">The packet.</param>
         /// <remarks></remarks>
+        [Obsolete("Use async method instead")]
         public void SendPacket(Packet packet)
         {
             if (packet == null)
@@ -354,6 +423,30 @@ namespace Pdelvo.Minecraft.Protocol
                     if (packet.Cache)
                         PacketCache[type].Enqueue(packet);
                 }
+            }
+        }
+        public async Task SendPacketAsync(Packet packet)
+        {
+            if (packet == null)
+                throw new ArgumentNullException("packet");
+            Type type = packet.GetType();
+            PacketFactory.PacketSenderAsync p = PacketFactory.GetSenderAsync(type);
+
+            await p(_innerStream, Version, packet);
+            if (UseCache)
+            {
+                if (!PacketCache.ContainsKey(type))
+                {
+                    lock (PacketCache)
+                    {
+                        if (!PacketCache.ContainsKey(type))
+                        {
+                            PacketCache.Add(type, new LockFreeQueue<Packet>());
+                        }
+                    }
+                }
+                if (packet.Cache)
+                    PacketCache[type].Enqueue(packet);
             }
         }
 

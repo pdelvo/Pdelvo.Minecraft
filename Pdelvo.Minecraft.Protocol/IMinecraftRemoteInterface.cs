@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Pdelvo.Minecraft.Protocol.Packets;
 
 namespace Pdelvo.Minecraft.Protocol
@@ -29,12 +30,12 @@ namespace Pdelvo.Minecraft.Protocol
         /// </summary>
         /// <param name="packet">The packet.</param>
         /// <remarks></remarks>
-        void SendPacket(Packet packet);
+        void SendPacketQueued(Packet packet);
         /// <summary>
         /// Runs this instance.
         /// </summary>
         /// <remarks></remarks>
-        void Run();
+        Task Run();
         /// <summary>
         /// Shutdowns this instance.
         /// </summary>

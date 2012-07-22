@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Pdelvo.Minecraft.Protocol.Packets;
 using Pdelvo.Minecraft.Network;
+using System.Threading.Tasks;
 
 namespace Pdelvo.Minecraft.Protocol
 {
@@ -14,22 +15,9 @@ namespace Pdelvo.Minecraft.Protocol
     public static class PacketFactory
     {
         #region Delegates
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         internal delegate Packet PacketCreator();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="writer">The writer.</param>
-        /// <param name="version">The version.</param>
-        /// <param name="packet">The packet.</param>
-        /// <remarks></remarks>
         internal delegate void PacketSender(BigEndianStream writer, int version, Packet packet);
+        internal delegate Task PacketSenderAsync(BigEndianStream writer, int version, Packet packet);
 
         #endregion
 
@@ -42,6 +30,7 @@ namespace Pdelvo.Minecraft.Protocol
         /// 
         /// </summary>
         private static readonly Dictionary<Type, PacketSender> SendCache = new Dictionary<Type, PacketSender>();
+        private static readonly Dictionary<Type, PacketSenderAsync> SendCacheAsync = new Dictionary<Type, PacketSenderAsync>();
 
         /// <summary>
         /// Gets the creator.
@@ -83,8 +72,8 @@ namespace Pdelvo.Minecraft.Protocol
                 int requiredVersion = PacketEndPoint.GetRequiredVersion(type, out throwOnRequired);
                 int lastSupportedVersion = PacketEndPoint.GetLastSupportedVersion(type, out throwOnLast);
 
-                var dyn = new DynamicMethod("PS_FACTORY_" + type.Name, typeof (void),
-                                            new[] {typeof (BigEndianStream), typeof (int), typeof (Packet)});
+                var dyn = new DynamicMethod("PS_FACTORY_" + type.Name, typeof(void),
+                                            new[] { typeof(BigEndianStream), typeof(int), typeof(Packet) });
                 ILGenerator gen = dyn.GetILGenerator();
                 gen.Emit(OpCodes.Ldarg_2); // Lade packet
                 gen.Emit(OpCodes.Ldarg_0); // Lade parameter BigEndianStream auf den Stack
@@ -94,12 +83,44 @@ namespace Pdelvo.Minecraft.Protocol
                 gen.Emit(throwOnRequired ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
                 gen.Emit(throwOnLast ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
                 gen.Emit(OpCodes.Call,
-                         typeof (PacketFactory).GetMethod("SendPacket",
+                         typeof(PacketFactory).GetMethod("SendPacket",
                                                           BindingFlags.Static | BindingFlags.Public |
                                                           BindingFlags.InvokeMethod));
-                gen.Emit(OpCodes.Ret); //Rückgabe der neuen Instanz
-                var ret = (PacketSender) dyn.CreateDelegate(typeof (PacketSender));
+                gen.Emit(OpCodes.Ret);
+                var ret = (PacketSender)dyn.CreateDelegate(typeof(PacketSender));
                 SendCache.Add(type, ret);
+                return ret;
+            }
+        }
+        internal static PacketSenderAsync GetSenderAsync(Type type)
+        {
+            if (SendCacheAsync.ContainsKey(type)) return SendCacheAsync[type];
+            lock (SendCacheAsync)
+            {
+                if (SendCacheAsync.ContainsKey(type)) return SendCacheAsync[type];
+                bool throwOnRequired;
+                bool throwOnLast;
+
+                int requiredVersion = PacketEndPoint.GetRequiredVersion(type, out throwOnRequired);
+                int lastSupportedVersion = PacketEndPoint.GetLastSupportedVersion(type, out throwOnLast);
+
+                var dyn = new DynamicMethod("PSA_FACTORY_" + type.Name, typeof(Task),
+                                            new[] { typeof(BigEndianStream), typeof(int), typeof(Packet) });
+                ILGenerator gen = dyn.GetILGenerator();
+                gen.Emit(OpCodes.Ldarg_2); // Lade packet
+                gen.Emit(OpCodes.Ldarg_0); // Lade parameter BigEndianStream auf den Stack
+                gen.Emit(OpCodes.Ldarg_1); // Lade die Minecraft Version auf den Stack
+                gen.Emit(OpCodes.Ldc_I4, requiredVersion);
+                gen.Emit(OpCodes.Ldc_I4, lastSupportedVersion);
+                gen.Emit(throwOnRequired ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                gen.Emit(throwOnLast ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                gen.Emit(OpCodes.Call,
+                         typeof(PacketFactory).GetMethod("SendPacketAsync",
+                                                          BindingFlags.Static | BindingFlags.Public |
+                                                          BindingFlags.InvokeMethod));
+                gen.Emit(OpCodes.Ret); //Rückgabe des Tasks
+                var ret = (PacketSenderAsync)dyn.CreateDelegate(typeof(PacketSenderAsync));
+                SendCacheAsync.Add(type, ret);
                 return ret;
             }
         }
@@ -133,6 +154,26 @@ namespace Pdelvo.Minecraft.Protocol
             if (!supported)
                 return;
             packet.SendItem(stream, version);
+        }
+
+        public static async Task SendPacketAsync(Packet packet, BigEndianStream stream,
+                              int version, int requiredVersion, int lastSupportedVersion, bool throwOnRequired,
+                              bool throwOnLast)
+        {
+            if (packet == null)
+                throw new ArgumentNullException("packet");
+            bool require = (requiredVersion == -1 || requiredVersion <= version);
+            bool last = (lastSupportedVersion == -1 || lastSupportedVersion >= version);
+            if (!require && throwOnRequired)
+                throw new ArgumentException("packet does not support minecraft version", "packet",
+                                            new PacketException(packet.Code));
+            if (!last && throwOnLast)
+                throw new ArgumentException("packet does not support minecraft version", "packet",
+                                            new PacketException(packet.Code));
+            bool supported = require && last;
+            if (!supported)
+                return;
+            await packet.SendItemAsync(stream, version);
         }
     }
 }

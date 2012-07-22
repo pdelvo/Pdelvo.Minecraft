@@ -1,6 +1,7 @@
 ﻿using Pdelvo.Minecraft.Protocol.Packets;
 using Pdelvo.Minecraft.Network;
 using System;
+using System.Threading.Tasks;
 
 namespace Pdelvo.Minecraft.Protocol
 {
@@ -50,6 +51,13 @@ namespace Pdelvo.Minecraft.Protocol
             if (packet == null)
                 throw new ArgumentNullException("packet");
             packet.SendItem(stream, version);
+        }
+
+        public static Task WritePacketAsync(this BigEndianStream stream, Packet packet, int version)
+        {
+            if (packet == null)
+                throw new ArgumentNullException("packet");
+            return packet.SendItemAsync(stream, version);
         }
 
         /// <summary>

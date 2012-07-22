@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Pdelvo.Minecraft.Network;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
@@ -71,8 +72,31 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new System.ArgumentNullException("reader");
             OnReceive(reader, version);
         }
+        public Task ReceiveAsync(BigEndianStream reader, int version)
+        {
+            if (reader == null)
+                throw new System.ArgumentNullException("reader");
+            return OnReceiveAsync(reader, version);
+        }
+
         protected abstract void OnSend(BigEndianStream writer, int version);
         protected abstract void OnReceive(BigEndianStream reader, int version);
+
+        protected virtual Task OnSendAsync(BigEndianStream writer, int version)
+        {
+            return Task.Run(() =>
+            {
+                OnSend(writer, version);
+            });
+        }
+
+        protected virtual Task OnReceiveAsync(BigEndianStream reader, int version)
+        {
+            return Task.Run(() =>
+            {
+                OnReceive(reader, version);
+            });
+        }
 
         /// <summary>
         /// Sends the item.
@@ -91,6 +115,19 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             else
                 OnSend(stream, version);
             stream.Flush();
+        }
+
+        public async Task SendItemAsync(BigEndianStream stream, int version)
+        {
+            if (stream == null)
+                throw new ArgumentNullException("stream");
+            if (Data != null && !Changed && stream.BufferEnabled)
+            {
+                await stream.WriteAsync(Data.ToArray(), 0, Data.Count());
+            }
+            else
+                await OnSendAsync(stream, version);
+            await stream.FlushAsync();
         }
     }
 }

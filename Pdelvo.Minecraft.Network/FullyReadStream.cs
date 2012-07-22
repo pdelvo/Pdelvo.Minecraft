@@ -3,6 +3,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Pdelvo.Minecraft.Network
 {
@@ -60,7 +62,14 @@ namespace Pdelvo.Minecraft.Network
             _buffer.Clear();
         }
 
-        //[DebuggerStepThrough]
+        public override async Task FlushAsync(CancellationToken cancellationToken)
+        {
+            await _sourceStream.WriteAsync(_buffer.ToArray(), 0, _buffer.Count);
+            await _sourceStream.FlushAsync();
+            _buffer.Clear();
+        }
+
+        [DebuggerStepThrough]
         public override int Read(byte[] buffer, int offset, int count)
         {
             int bytesRead = 0;
@@ -86,6 +95,33 @@ namespace Pdelvo.Minecraft.Network
             return bytesRead;
         }
 
+        [DebuggerStepThrough]
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, System.Threading.CancellationToken token)
+        {
+            int bytesRead = 0;
+            while (bytesRead < count)
+            {
+                int readAheadAvailableBytes = _readAheadLength - _readAheadOffset;
+
+                if (readAheadAvailableBytes > 0)
+                {
+                    int bytesRequired = count - bytesRead;
+                    int toCopy = Math.Min(readAheadAvailableBytes, bytesRequired);
+                    //Array.Copy(readAheadBuffer, readAheadOffset, buffer, offset + bytesRead, toCopy);
+                    Buffer.BlockCopy(_readAheadBuffer, _readAheadOffset, buffer, offset + bytesRead, toCopy);
+                    bytesRead += toCopy;
+                    _readAheadOffset += toCopy;
+                }
+                else
+                {
+                    await ReadDataAsync(count, token);
+                }
+            }
+            _pos += bytesRead;
+            return bytesRead;
+            //return base.ReadAsync(buffer, offset, count, cancellationToken);
+        }
+
         private void ReadData(int maxCount)
         {
             _readAheadOffset = 0;
@@ -94,6 +130,20 @@ namespace Pdelvo.Minecraft.Network
                 throw new EndOfStreamException();
         }
 
+        private Task ReadDataAsync(int maxCount)
+        {
+            return ReadDataAsync(maxCount, CancellationToken.None);
+        }
+
+        private async Task ReadDataAsync(int maxCount, CancellationToken token)
+        {
+            _readAheadOffset = 0;
+            _readAheadLength = await _sourceStream.ReadAsync(_readAheadBuffer, 0, maxCount, token);
+            if (_readAheadLength == 0)
+                throw new EndOfStreamException();
+        }
+
+        [DebuggerStepThrough]
         public override long Seek(long offset, SeekOrigin origin)
         {
             if (offset == 0 && origin == SeekOrigin.Begin)
@@ -133,6 +183,19 @@ namespace Pdelvo.Minecraft.Network
         {
             if (_readAheadLength - _readAheadOffset == 0)
                 ReadData(1);
+            return _readAheadBuffer[_readAheadOffset];
+        }
+
+        public Task<int> PeekAsync()
+        {
+            return PeekAsync(CancellationToken.None);
+        }
+
+
+        public async Task<int> PeekAsync(CancellationToken token)
+        {
+            if (_readAheadLength - _readAheadOffset == 0)
+                await ReadDataAsync(1, token);
             return _readAheadBuffer[_readAheadOffset];
         }
     }

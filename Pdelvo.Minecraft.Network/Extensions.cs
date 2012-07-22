@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Pdelvo.Minecraft.Network
 {
@@ -89,6 +91,25 @@ namespace Pdelvo.Minecraft.Network
             }
             socket.EndConnect(asyncResult);
             return socket.Connected;
+        }
+
+        public static async Task<int> ReadByteAsync(this Stream stream)
+        {
+            try
+            {
+                byte[] buffer = new byte[1];
+                int count = await stream.ReadAsync(buffer, 0, 1);
+                return count == 0 ? -1 : buffer[0];
+            }
+            catch (EndOfStreamException)
+            {
+                return -1;
+            }
+        }
+
+        public static Task WriteByteAsync(this Stream stream, byte value)
+        {
+            return stream.WriteAsync(new[] { value }, 0, 1);
         }
     }
 }
