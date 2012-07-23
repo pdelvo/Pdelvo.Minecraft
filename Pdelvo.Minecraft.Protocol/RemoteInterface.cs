@@ -19,10 +19,10 @@ namespace Pdelvo.Minecraft.Protocol
     /// <remarks></remarks>
     public abstract class RemoteInterface : IMinecraftRemoteInterface, IDisposable
     {
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        //protected Thread Thread { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        protected Thread Thread { get; set; }
 
         /// <summary>
         /// 
@@ -33,7 +33,6 @@ namespace Pdelvo.Minecraft.Protocol
         LockFreeQueue<Dieable<Packet>> _slowQueue = new LockFreeQueue<Dieable<Packet>>();
 
         ActionBlock<Packet> _packetSender;
-        ActionBlock<Packet> _priorityChooser;
         BufferBlock<Packet> _highPriorityBuffer;
         BufferBlock<Packet> _lowPriorityBuffer;
 
@@ -44,28 +43,20 @@ namespace Pdelvo.Minecraft.Protocol
         /// <remarks></remarks>
         protected RemoteInterface(PacketEndPoint endPoint)
         {
-            //Thread = new Thread(WriteLoop);
+            Thread = new Thread(WriteLoop);
             EndPoint = endPoint;
 
             SetupMessageChain();
+            Thread.Start();
         }
 
         private void SetupMessageChain()
         {
             _highPriorityBuffer = new BufferBlock<Packet>();
             _lowPriorityBuffer = new BufferBlock<Packet>();
-            _priorityChooser = new ActionBlock<Packet>(async p =>
-            {
-                if (p.CanBeDelayed)
-                    await _lowPriorityBuffer.SendAsync(p);
-                else
-                    await _highPriorityBuffer.SendAsync(p);
-            });
-            _priorityChooser.Completion.ContinueWith(a =>
-            {
-                _lowPriorityBuffer.Complete();
-                _highPriorityBuffer.Complete();
-            });
+            //_priorityChooser.Completion.ContinueWith(a =>
+            //{
+            //});
             _packetSender = new ActionBlock<Packet>(async p =>
             {
                 await SendPacketAsync(p);
@@ -151,10 +142,9 @@ namespace Pdelvo.Minecraft.Protocol
                 if (Aborted != null)
                     Aborted(this, new RemoteInterfaceAbortedEventArgs(ex));
             }
-            //if (Thread.ThreadState == System.Threading.ThreadState.Running)
-            //    throw new InvalidOperationException("Thread already running");
+            if (Thread.ThreadState == System.Threading.ThreadState.Running)
+                throw new InvalidOperationException("Thread already running");
             //BeginReceivePacket();
-            //Thread.Start();
         }
 
         /// <summary>
@@ -198,7 +188,8 @@ namespace Pdelvo.Minecraft.Protocol
                 if (Aborted != null)
                     Aborted(this, new RemoteInterfaceAbortedEventArgs());
             }
-            _priorityChooser.Complete();
+            _lowPriorityBuffer.Complete();
+            _highPriorityBuffer.Complete();
             _packetSender.Completion.Wait();
             EndPoint.Shutdown();
         }
@@ -233,71 +224,99 @@ namespace Pdelvo.Minecraft.Protocol
 
         AutoResetEvent _writeEvent = new AutoResetEvent(false);
 
-        //private void WriteLoop()
-        //{
-        //    while (true)
-        //    {
-        //        _writeEvent.WaitOne();
-        //        if (_aborting) return;
-        //        Dieable<Packet> packet;
-               
-        //        if (_fastQueue.TryDequeue(out packet))
-        //        {
-        //            //write data
-        //            _writeEvent.Set();
-        //            if (!packet.IsDead)
-        //            SendPacket(packet);
-        //        }
-        //        if (packet == null)
-        //        {
-        //            if (_slowQueue.TryDequeue(out packet))
-        //            {
-        //                //write data
-        //                _writeEvent.Set();
-        //                if (!packet.IsDead)
-        //                    SendPacket(packet);
-        //                //else Debug.WriteLine("Packet dropped");
-        //            }
-        //        }
-        //    }
-        //}
-        public Task SendPacketQueuedAsync(Packet packet)
+        private async void WriteLoop()
         {
-            return _priorityChooser.SendAsync(packet);
+            while (true)
+            {
+                _writeEvent.WaitOne();
+                if (_aborting) return;
+                Dieable<Packet> packet;
+
+                if (_fastQueue.TryDequeue(out packet))
+                {
+                    //write data
+                    _writeEvent.Set();
+                    if (!packet.IsDead)
+                        await SendPacketAsync(packet);
+                }
+                if (packet == null)
+                {
+                    if (_slowQueue.TryDequeue(out packet))
+                    {
+                        //write data
+                        _writeEvent.Set();
+                        if (!packet.IsDead)
+                            await SendPacketAsync(packet);
+                        //else Debug.WriteLine("Packet dropped");
+                    }
+                }
+            }
+        }
+        public async Task SendPacketQueuedAsync(Packet packet)
+        {
+            if (!packet.CanBeDelayed)
+            {
+                _fastQueue.Enqueue(packet);
+                _writeEvent.Set();
+            }
+            else
+            {
+                var pc = packet as PreChunk;
+                var mc = packet as MapChunk;
+                if (mc != null)
+                {
+                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
+                    {
+                        var mapChunk = r as MapChunk;
+                        return mapChunk.PositionX == mc.PositionX && mapChunk.PositionZ == mc.PositionZ;
+                    }));
+                    //_slowQueue.EnumerateItems().Where(t => t.Item is PreChunk).Each(a => a.Die(r => (r as PreChunk).X == mc.X && (r as PreChunk).Z == mc.Z));
+                }
+                else if (pc != null)
+                {
+                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
+                    {
+                        var mapChunk = r as MapChunk;
+                        return mapChunk.PositionX == pc.PositionX && mapChunk.PositionZ == pc.PositionZ;
+                    }));
+                }
+
+                _slowQueue.Enqueue(packet);
+                _writeEvent.Set();
+            }
         }
         public void SendPacketQueued(Packet packet)
         {
-            _priorityChooser.Post(packet);
-            //if (fast)
-            //{
-            //    _fastQueue.Enqueue(packet);
-            //    _writeEvent.Set();
-            //}
-            //else
-            //{
-            //    var pc = packet as PreChunk;
-            //    var mc = packet as MapChunk;
-            //    if (mc != null)
-            //    {
-            //        _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r => 
-            //        { 
-            //            var mapChunk = r as MapChunk;
-            //            return mapChunk.PositionX == mc.PositionX && mapChunk.PositionZ == mc.PositionZ; 
-            //        }));
-            //        //_slowQueue.EnumerateItems().Where(t => t.Item is PreChunk).Each(a => a.Die(r => (r as PreChunk).X == mc.X && (r as PreChunk).Z == mc.Z));
-            //    } 
-            //    else if (pc != null)
-            //    {
-            //        _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
-            //        {
-            //            var mapChunk = r as MapChunk;
-            //            return mapChunk.PositionX == pc.PositionX && mapChunk.PositionZ == pc.PositionZ;
-            //        }));
-            //    }
+            if (!packet.CanBeDelayed)
+            {
+                _fastQueue.Enqueue(packet);
+                _writeEvent.Set();
+            }
+            else
+            {
+                var pc = packet as PreChunk;
+                var mc = packet as MapChunk;
+                if (mc != null)
+                {
+                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
+                    {
+                        var mapChunk = r as MapChunk;
+                        return mapChunk.PositionX == mc.PositionX && mapChunk.PositionZ == mc.PositionZ;
+                    }));
+                    //_slowQueue.EnumerateItems().Where(t => t.Item is PreChunk).Each(a => a.Die(r => (r as PreChunk).X == mc.X && (r as PreChunk).Z == mc.Z));
+                }
+                else if (pc != null)
+                {
+                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
+                    {
+                        var mapChunk = r as MapChunk;
+                        return mapChunk.PositionX == pc.PositionX && mapChunk.PositionZ == pc.PositionZ;
+                    }));
+                }
 
-            //    _slowQueue.Enqueue(packet);
-            //    _writeEvent.Set();
-            //}
+                _slowQueue.Enqueue(packet);
+                _writeEvent.Set();
+            }
         }
 
         //public void SendPacketQueued(Packet packet)
