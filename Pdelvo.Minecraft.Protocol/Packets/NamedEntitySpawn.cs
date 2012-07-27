@@ -67,6 +67,13 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public short CurrentItem { get; set; }
 
         /// <summary>
+        /// Gets or sets the current item.
+        /// </summary>
+        /// <value>The current item.</value>
+        /// <remarks></remarks>
+        public MetadataInfo MetaData { get; set; }
+
+        /// <summary>
         /// Receives the specified reader.
         /// </summary>
         /// <param name="reader">The reader.</param>
@@ -84,6 +91,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             Rotation = reader.ReadByte();
             Pitch = reader.ReadByte();
             CurrentItem = reader.ReadInt16();
+            if (version >= 38)
+                MetaData = reader.ReadMetaData(version);
         }
 
         /// <summary>
@@ -105,6 +114,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(Rotation);
             writer.Write(Pitch);
             writer.Write(CurrentItem);
+            if (version >= 38)
+                writer.Write(MetaData);
         }
     }
 }

@@ -66,7 +66,7 @@ namespace Pdelvo.Minecraft.Protocol
             RegisterPacket<WindowItems>(0x68);
             RegisterPacket<UpdateProgressBar>(0x69);
             RegisterPacket<ItemData>(0x83);
-            RegisterPacket<UpdateMobSpawner>(0x84);
+            RegisterPacket<UpdateTileEntity>(0x84);
             RegisterPacket<EncryptionKeyResponse>(0xFC);
             RegisterPacket<EncryptionKeyRequest>(0xFD);
 

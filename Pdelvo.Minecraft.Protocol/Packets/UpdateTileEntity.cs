@@ -1,4 +1,6 @@
-﻿using Pdelvo.Minecraft.Network;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
@@ -7,13 +9,13 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(25)]
-    public class UpdateMobSpawner : Packet
+    public class UpdateTileEntity : Packet
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="UpdateMobSpawner"/> class.
+        /// Initializes a new instance of the <see cref="UpdateTileEntity"/> class.
         /// </summary>
         /// <remarks></remarks>
-        public UpdateMobSpawner()
+        public UpdateTileEntity()
         {
             Code = 0x84;
         }
@@ -69,6 +71,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <remarks></remarks>
         public int Custom3 { get; set; }
 
+        public IEnumerable<byte> DataNBT { get; set; }
         /// <summary>
         /// Receives the specified reader.
         /// </summary>
@@ -83,9 +86,18 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             PositionY = reader.ReadInt16();
             PositionZ = reader.ReadInt32();
             Action = reader.ReadByte();
-            Custom1 = reader.ReadInt32();
-            Custom2 = reader.ReadInt32();
-            Custom3 = reader.ReadInt32();
+            if (version >= 39)
+            {
+                short length = reader.ReadInt16();
+                length = length == -1 ? (short)0 : length;
+                DataNBT = reader.ReadBytes(length);
+            }
+            else
+            {
+                Custom1 = reader.ReadInt32();
+                Custom2 = reader.ReadInt32();
+                Custom3 = reader.ReadInt32();
+            }
         }
 
         /// <summary>
@@ -103,9 +115,18 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(PositionY);
             writer.Write(PositionZ);
             writer.Write(Action);
-            writer.Write(Custom1);
-            writer.Write(Custom2);
-            writer.Write(Custom3);
+            if (version >= 39)
+            {
+                byte[] buf = DataNBT.ToArray();
+                writer.Write((short)(buf.Length == 0 ? -1 : buf.Length));
+                writer.Write(buf);
+            }
+            else
+            {
+                writer.Write(Custom1);
+                writer.Write(Custom2);
+                writer.Write(Custom3);
+            }
         }
     }
 }

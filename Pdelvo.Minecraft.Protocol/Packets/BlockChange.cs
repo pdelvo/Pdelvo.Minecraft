@@ -41,7 +41,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// </summary>
         /// <value>The type of the block.</value>
         /// <remarks></remarks>
-        public byte BlockType { get; set; }
+        public short BlockType { get; set; }
         /// <summary>
         /// Gets or sets the block metadata.
         /// </summary>
@@ -62,7 +62,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             PositionX = reader.ReadInt32();
             PositionY = reader.ReadByte();
             PositionZ = reader.ReadInt32();
-            BlockType = reader.ReadByte();
+            if (version >= 38)
+                BlockType = reader.ReadInt16();
+            else
+                BlockType = reader.ReadByte();
             BlockMetadata = reader.ReadByte();
         }
 
@@ -80,7 +83,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(PositionX);
             writer.Write(PositionY);
             writer.Write(PositionZ);
-            writer.Write(BlockType);
+            if (version >= 38)
+                writer.Write(BlockType);
+            else
+                writer.Write((byte)BlockType);
             writer.Write(BlockMetadata);
         }
     }

@@ -171,7 +171,7 @@
     <Compile Include="Packets\Transaction.cs" />
     <Compile Include="Packets\MapChunkBulkPacket.cs" />
     <Compile Include="Packets\UpdateHealth.cs" />
-    <Compile Include="Packets\UpdateMobSpawner.cs" />
+    <Compile Include="Packets\UpdateTileEntity.cs" />
     <Compile Include="Packets\UpdateProgressBar.cs" />
     <Compile Include="Packets\UpdateSign.cs" />
     <Compile Include="Packets\UseBed.cs" />

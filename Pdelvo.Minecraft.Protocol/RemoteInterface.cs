@@ -237,7 +237,7 @@ namespace Pdelvo.Minecraft.Protocol
                     //write data
                     _writeEvent.Set();
                     if (!packet.IsDead)
-                        await SendPacketAsync(packet);
+                        SendPacket(packet);
                 }
                 if (packet == null)
                 {
@@ -245,8 +245,12 @@ namespace Pdelvo.Minecraft.Protocol
                     {
                         //write data
                         _writeEvent.Set();
+                        if (packet == null)
+                        {
+                            Shutdown();
+                        }
                         if (!packet.IsDead)
-                            await SendPacketAsync(packet);
+                            SendPacket(packet);
                         //else Debug.WriteLine("Packet dropped");
                     }
                 }
@@ -254,6 +258,8 @@ namespace Pdelvo.Minecraft.Protocol
         }
         public async Task SendPacketQueuedAsync(Packet packet)
         {
+            if (packet == null)
+                _slowQueue.Enqueue(null);
             if (!packet.CanBeDelayed)
             {
                 _fastQueue.Enqueue(packet);
@@ -287,6 +293,8 @@ namespace Pdelvo.Minecraft.Protocol
         }
         public void SendPacketQueued(Packet packet)
         {
+            if (packet == null)
+                _slowQueue.Enqueue(packet);
             if (!packet.CanBeDelayed)
             {
                 _fastQueue.Enqueue(packet);
