@@ -14,7 +14,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// </summary>
         /// <value>The data.</value>
         /// <remarks></remarks>
-        public Dictionary<byte, object> Data { get; private set; }
+        public Dictionary<byte, object> Data { get; set; }
 
         /// <summary>
         /// Reads the specified reader.

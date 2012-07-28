@@ -15,6 +15,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public NamedEntitySpawn()
         {
             Code = 0x14;
+
+            MetaData = new MetadataInfo();
         }
 
         /// <summary>
@@ -93,6 +95,18 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             CurrentItem = reader.ReadInt16();
             if (version >= 38)
                 MetaData = reader.ReadMetaData(version);
+            else
+            {
+                MetaData = new MetadataInfo();
+                MetaData.Data = new System.Collections.Generic.Dictionary<byte, object>
+                {
+                    {17,(byte)0},
+                    {0,(byte)0},
+                    {16,(byte)0},
+                    {33,(short)300},
+                    {72,(int)0}
+                };
+            }
         }
 
         /// <summary>
