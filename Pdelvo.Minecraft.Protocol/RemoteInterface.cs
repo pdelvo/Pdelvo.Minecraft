@@ -404,32 +404,6 @@ namespace Pdelvo.Minecraft.Protocol
             return p;
         }
 
-        public void SwitchToRC4Mode(byte[] key)
-        {
-            var stream = EndPoint.Stream.Net as FullyReadStream;
-            if (stream.BaseStream is RC4Stream)
-            {
-                //var rc4 = stream.BaseStream as RC4Stream;
-                //rc4.Key = key;
-            }
-            else
-            {
-                stream.BaseStream = new RC4Stream(stream.BaseStream, key);
-            }
-        }
-        public void SwitchToHCMode(byte [] key)
-        {
-            var stream = EndPoint.Stream.Net as FullyReadStream;
-            if (stream.BaseStream is HCStream)
-            {
-                //var hc4 = stream.BaseStream as HCStream;
-                //hc4.Key = key;
-            }
-            else
-            {
-                stream.BaseStream = new HCStream(stream.BaseStream, key);
-            }
-        }
         public void SwitchToAesMode(byte[] key)
         {
             var stream = EndPoint.Stream.Net as FullyReadStream;

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using java.security;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
 using System.Security.Cryptography;
@@ -21,13 +20,13 @@ namespace Pdelvo.Minecraft.Network
         public AesStream(Stream stream, byte[] key)
         {
             BaseStream = stream;
-            Key = ProtocolSecurity.GenerateAesKey(key);
+            Key = key;
         }
         public Stream BaseStream { get; set; }
 
 
-        Key _key;
-        internal Key Key
+        byte[] _key;
+        internal byte[] Key
         {
             get
             {
@@ -37,9 +36,9 @@ namespace Pdelvo.Minecraft.Network
             {
                 _key = value;
                 _encrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-                _encrypter.Init(true, new ParametersWithIV(new KeyParameter(Key.getEncoded()), Key.getEncoded(), 0, 16));
+                _encrypter.Init(true, new ParametersWithIV(new KeyParameter(Key), Key, 0, 16));
                 _decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-                _decrypter.Init(false, new ParametersWithIV(new KeyParameter(Key.getEncoded()), Key.getEncoded(), 0, 16));
+                _decrypter.Init(false, new ParametersWithIV(new KeyParameter(Key), Key, 0, 16));
             }
         }
 
