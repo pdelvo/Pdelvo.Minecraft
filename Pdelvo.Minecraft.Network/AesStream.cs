@@ -3,19 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Parameters;
 using System.Security.Cryptography;
-using Org.BouncyCastle.Crypto.Modes;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Crypto;
 
 namespace Pdelvo.Minecraft.Network
 {
     public class AesStream : Stream
     {
-        BufferedBlockCipher _encrypter;
-        BufferedBlockCipher _decrypter;
+        CryptoStream _encryptStream;
+        CryptoStream _decryptStream;
 
         public AesStream(Stream stream, byte[] key)
         {
@@ -24,6 +19,18 @@ namespace Pdelvo.Minecraft.Network
         }
         public Stream BaseStream { get; set; }
 
+        static RijndaelManaged GenerateAES(byte[] key)
+        {
+            RijndaelManaged cipher = new RijndaelManaged();
+            cipher.Mode = CipherMode.CFB;
+            cipher.Padding = PaddingMode.None;
+            cipher.KeySize = 128;
+            cipher.FeedbackSize = 8;
+            cipher.Key = key;
+            cipher.IV = key;
+
+            return cipher;
+        }
 
         byte[] _key;
         internal byte[] Key
@@ -35,10 +42,12 @@ namespace Pdelvo.Minecraft.Network
             set
             {
                 _key = value;
-                _encrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-                _encrypter.Init(true, new ParametersWithIV(new KeyParameter(Key), Key, 0, 16));
-                _decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-                _decrypter.Init(false, new ParametersWithIV(new KeyParameter(Key), Key, 0, 16));
+                var rijndael = GenerateAES(value);
+                var encryptTransform = rijndael.CreateEncryptor();
+                var decryptTransform = rijndael.CreateDecryptor();
+
+                _encryptStream = new CryptoStream(BaseStream, encryptTransform, CryptoStreamMode.Write);
+                _decryptStream = new CryptoStream(BaseStream, decryptTransform, CryptoStreamMode.Read);
             }
         }
 
@@ -79,12 +88,19 @@ namespace Pdelvo.Minecraft.Network
             }
         }
 
+        public override System.Threading.Tasks.Task<int> ReadAsync(byte[] buffer, int offset, int count, System.Threading.CancellationToken cancellationToken)
+        {
+            return _decryptStream.ReadAsync(buffer, offset, count, cancellationToken);
+        }
+
+        public override int ReadByte()
+        {
+            return _decryptStream.ReadByte();
+        }
+
         public override int Read(byte[] buffer, int offset, int count)
         {
-            int cnt = BaseStream.Read(buffer, offset, count);
-
-            _decrypter.ProcessBytes(buffer, offset, cnt, buffer, offset);
-            return cnt;
+            return _decryptStream.Read(buffer, offset, count);
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -99,9 +115,7 @@ namespace Pdelvo.Minecraft.Network
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            byte[] data = new byte[count - offset];
-            _encrypter.ProcessBytes(buffer, offset, count, data, 0);
-            BaseStream.Write(data, 0, count);
+            _encryptStream.Write(buffer, offset, count);
         }
     }
 }

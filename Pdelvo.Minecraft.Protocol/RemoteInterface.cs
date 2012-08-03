@@ -2,7 +2,6 @@
 using System.Threading;
 using Pdelvo.Minecraft.Protocol.Packets;
 using System.Diagnostics;
-using java.security;
 using Pdelvo.Minecraft.Network;
 using System.Collections;
 using System.Collections.Generic;

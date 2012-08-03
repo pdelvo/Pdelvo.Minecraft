@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Security;
 
 namespace Pdelvo.Minecraft.Network
 {
     public static class ProtocolSecurity
     {
+        static RandomNumberGenerator _secureRandomGenerator;
+
+        static ProtocolSecurity()
+        {
+            _secureRandomGenerator = RandomNumberGenerator.Create();
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
         public static RSAParameters GenerateRSAKeyPair(out RSACryptoServiceProvider provider)
         {
@@ -34,8 +37,9 @@ namespace Pdelvo.Minecraft.Network
         }
         public static byte[] GenerateAes128Key()
         {
-
-            return new SecureRandom().GenerateSeed(16);
+            var bytes = new byte[16];
+            _secureRandomGenerator.GetBytes(bytes);
+            return bytes;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]

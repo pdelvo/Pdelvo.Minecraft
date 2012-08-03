@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
-using Org.BouncyCastle.Math;
 
 namespace Pdelvo.Minecraft.Network
 {
@@ -1656,7 +1656,7 @@ namespace Pdelvo.Minecraft.Network
             {
                 StringBuilder sb = new StringBuilder("Incorrect PrivateKeyInfo Version. ");
                 BigInteger v = new BigInteger(value);
-                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString());
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
@@ -1731,7 +1731,7 @@ namespace Pdelvo.Minecraft.Network
             {
                 StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Version. ");
                 BigInteger v = new BigInteger(value);
-                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString());
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
