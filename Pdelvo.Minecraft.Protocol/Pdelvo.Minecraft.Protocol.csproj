@@ -62,6 +62,26 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classic\ClassicClientInterface.cs" />
+    <Compile Include="Classic\ClassicExtensions.cs" />
+    <Compile Include="Classic\ClassicServerInterface.cs" />
+    <Compile Include="Classic\Packets\DespawnPlayer.cs" />
+    <Compile Include="Classic\Packets\DisconnectPlayer.cs" />
+    <Compile Include="Classic\Packets\LevelDataChunk.cs" />
+    <Compile Include="Classic\Packets\LevelFinalize.cs" />
+    <Compile Include="Classic\Packets\LevelInitialize.cs" />
+    <Compile Include="Classic\Packets\Message.cs" />
+    <Compile Include="Classic\Packets\OrientationUpdate.cs" />
+    <Compile Include="Classic\Packets\Ping.cs" />
+    <Compile Include="Classic\Packets\PlayerIdentification.cs" />
+    <Compile Include="Classic\Packets\PositionAndOrientation.cs" />
+    <Compile Include="Classic\Packets\PositionAndOrientationUpdate.cs" />
+    <Compile Include="Classic\Packets\PositionUpdate.cs" />
+    <Compile Include="Classic\Packets\ServerIdentification.cs" />
+    <Compile Include="Classic\Packets\SetBlock.cs" />
+    <Compile Include="Classic\Packets\SetServerBlock.cs" />
+    <Compile Include="Classic\Packets\SpawnPlayer.cs" />
+    <Compile Include="Classic\Packets\UpdateUserType.cs" />
     <Compile Include="ClientRemoteInterface.cs" />
     <Compile Include="EnchantHelper.cs" />
     <Compile Include="GlobalSuppressions.cs" />
@@ -182,6 +202,7 @@
     <None Include="packages.config" />
     <None Include="protocolKey.snk" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

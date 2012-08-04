@@ -1,19 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Pdelvo.Minecraft.Network;
+using Pdelvo.Minecraft.Protocol.Packets;
 
-namespace Pdelvo.Minecraft.Protocol.Packets
+namespace Pdelvo.Minecraft.Protocol.Classic.Packets
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <remarks></remarks>
-    public class EmptyPacket : Packet
+    public class PlayerIdentification : Packet
     {
+        public byte ProtocolVersion { get; set; }
+        public string Username { get; set; }
+        public string VerificationKey { get; set; }
+        public byte Unused { get; set; }
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="EmptyPacket"/> class.
+        /// Initializes a new instance of the <see cref="PlayerIdentification"/> class.
         /// </summary>
         /// <remarks></remarks>
-        public EmptyPacket()
+        public PlayerIdentification()
         {
             Code = 0x00;
         }
@@ -28,6 +34,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         {
             if (reader == null)
                 throw new ArgumentNullException("reader");
+            ProtocolVersion = reader.ReadByte();
+            Username = reader.ReadClassicString();
+            VerificationKey = reader.ReadClassicString();
+            Unused = reader.ReadByte();
         }
 
         /// <summary>
@@ -41,7 +51,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (writer == null)
                 throw new ArgumentNullException("writer");
             writer.Write(Code);
-          
+            writer.Write(ProtocolVersion);
+            writer.WriteClassicString(Username);
+            writer.WriteClassicString(VerificationKey);
+            writer.Write(Unused);
         }
     }
 }
