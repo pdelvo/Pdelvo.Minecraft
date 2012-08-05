@@ -1,6 +1,7 @@
 ﻿using Pdelvo.Minecraft.Protocol.Helper;
 using Pdelvo.Minecraft.Protocol.Packets;
 using Pdelvo.Minecraft.Network;
+using System.IO;
 
 namespace Pdelvo.Minecraft.Protocol
 {
@@ -72,6 +73,12 @@ namespace Pdelvo.Minecraft.Protocol
 
             //General packets
             ProtocolHelper.RegisterGeneralPackets(EndPoint);
+        }
+
+        public static ServerRemoteInterface Create(Stream baseStream, int protocolVersion)
+        {
+            return new ServerRemoteInterface(new BigEndianStream(
+                new FullyReadStream(baseStream)), protocolVersion);
         }
     }
 }
