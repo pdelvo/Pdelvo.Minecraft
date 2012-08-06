@@ -283,21 +283,20 @@ namespace Pdelvo.Minecraft.Protocol
             }
         }
 
-        [DebuggerStepThrough]
-        public async Task<Packet> ReadPacketAsync()
-        {
-            Monitor.Enter(_readLock);
-            try
-            {
-                byte id = await _innerStream.ReadByteAsync();
-                return await ReadPacketAsync(id, false);
-            }
-            finally
-            {
-                Monitor.Exit(_readLock);
-            }
-        }
+        Task<Packet> _sendingTask = Task.FromResult<Packet>(null);
 
+        [DebuggerStepThrough]
+        public Task<Packet> ReadPacketAsync()
+        {
+            return _sendingTask = ReadPacketAsyncInternal();
+        }
+        [DebuggerStepThrough]
+        private async Task<Packet> ReadPacketAsyncInternal()
+        {
+            await _sendingTask;
+            byte id = await _innerStream.ReadByteAsync();
+            return await ReadPacketAsync(id, false);
+        }
         /// <summary>
         /// Packets the support version.
         /// </summary>
