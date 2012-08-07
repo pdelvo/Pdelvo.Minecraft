@@ -19,7 +19,7 @@ namespace Pdelvo.Minecraft.Network
         }
         public Stream BaseStream { get; set; }
 
-        static RijndaelManaged GenerateAES(byte[] key)
+        static Rijndael GenerateAES(byte[] key)
         {
             RijndaelManaged cipher = new RijndaelManaged();
             cipher.Mode = CipherMode.CFB;
