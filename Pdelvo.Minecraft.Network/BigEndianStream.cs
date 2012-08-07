@@ -107,37 +107,60 @@ namespace Pdelvo.Minecraft.Network
 
         public short ReadInt16()
         {
-            return unchecked((short) ((ReadByte() << 8) | ReadByte()));
+            if (BitConverter.IsLittleEndian)
+                return unchecked((short)((ReadByte() << 8) | ReadByte()));
+            else
+                return unchecked((short)((ReadByte()) | (ReadByte() << 8)));
         }
 
         public async Task<short> ReadInt16Async()
         {
+            if (BitConverter.IsLittleEndian)
             return unchecked((short)(((await ReadByteAsync()) << 8) | (await ReadByteAsync())));
+            else
+                return unchecked((short)(((await ReadByteAsync())) | (await ReadByteAsync() << 8)));
         }
 
         public int ReadInt32()
         {
-            return unchecked((ReadByte() << 24) | (ReadByte() << 16) | (ReadByte() << 8) | ReadByte());
+            if (BitConverter.IsLittleEndian)
+                return unchecked((ReadByte() << 24) | (ReadByte() << 16) | (ReadByte() << 8) | ReadByte());
+            else
+                return unchecked((ReadByte()) | (ReadByte() << 8) | (ReadByte() << 16) | (ReadByte() << 24));
         }
 
         public async Task<int> ReadInt32Async()
         {
+            if (BitConverter.IsLittleEndian)
             return unchecked(((await ReadByteAsync()) << 24) | ((await ReadByteAsync()) << 16)
                 | ((await ReadByteAsync()) << 8) | (await ReadByteAsync()));
+            else
+                return unchecked(((await ReadByteAsync())) | ((await ReadByteAsync()) << 8)
+                    | ((await ReadByteAsync()) << 16) | (await ReadByteAsync() << 24));
         }
 
         public long ReadInt64()
         {
+            if (BitConverter.IsLittleEndian)
             return unchecked((ReadByte() << 56) | (ReadByte() << 48) | (ReadByte() << 40) | (ReadByte() << 32)
                              | (ReadByte() << 24) | (ReadByte() << 16) | (ReadByte() << 8) | ReadByte());
+            else
+                return unchecked((ReadByte()) | (ReadByte() << 8) | (ReadByte() << 16) | (ReadByte() << 24)
+                                 | (ReadByte() << 32) | (ReadByte() << 40) | (ReadByte() << 48) | (ReadByte() << 56));
         }
 
         public async Task<long> ReadInt64Async()
         {
+            if (BitConverter.IsLittleEndian)
             return unchecked(((await ReadByteAsync()) << 56) | ((await ReadByteAsync()) << 48) 
                 | ((await ReadByteAsync()) << 40) | ((await ReadByteAsync()) << 32)
                 | ((await ReadByteAsync()) << 24) | ((await ReadByteAsync()) << 16) 
                 | ((await ReadByteAsync()) << 8) | (await ReadByteAsync()));
+            else
+                return unchecked(((await ReadByteAsync())) | ((await ReadByteAsync()) << 8)
+                    | ((await ReadByteAsync()) << 16) | ((await ReadByteAsync()) << 24)
+                    | ((await ReadByteAsync()) << 32) | ((await ReadByteAsync()) << 40)
+                    | ((await ReadByteAsync()) << 48) | (await ReadByteAsync() << 56));
         }
 
         public unsafe float ReadSingle()
@@ -246,54 +269,118 @@ namespace Pdelvo.Minecraft.Network
 
         public void Write(short data)
         {
-            Write(unchecked((byte)(data >> 8)));
-            Write(unchecked((byte)data));
+            if (BitConverter.IsLittleEndian)
+            {
+                Write(unchecked((byte)(data >> 8)));
+                Write(unchecked((byte)data));
+            }
+            else
+            {
+                Write(unchecked((byte)data));
+                Write(unchecked((byte)(data >> 8)));
+            }
         }
 
         public async Task WriteAsync(short data)
         {
-            await WriteAsync(unchecked((byte)(data >> 8)));
-            await WriteAsync(unchecked((byte)data));
+            if (BitConverter.IsLittleEndian)
+            {
+                await WriteAsync(unchecked((byte)(data >> 8)));
+                await WriteAsync(unchecked((byte)data));
+            }
+            else
+            {
+                await WriteAsync(unchecked((byte)data));
+                await WriteAsync(unchecked((byte)(data >> 8)));
+            }
         }
 
         public void Write(int data)
         {
-            Write(unchecked((byte)(data >> 24)));
-            Write(unchecked((byte)(data >> 16)));
-            Write(unchecked((byte)(data >> 8)));
-            Write(unchecked((byte)data));
+            if (BitConverter.IsLittleEndian)
+            {
+                Write(unchecked((byte)(data >> 24)));
+                Write(unchecked((byte)(data >> 16)));
+                Write(unchecked((byte)(data >> 8)));
+                Write(unchecked((byte)data));
+            }
+            else
+            {
+                Write(unchecked((byte)data));
+                Write(unchecked((byte)(data >> 8)));
+                Write(unchecked((byte)(data >> 16)));
+                Write(unchecked((byte)(data >> 24)));
+            }
         }
 
         public async Task WriteAsync(int data)
         {
-            await WriteAsync(unchecked((byte)(data >> 24)));
-            await WriteAsync(unchecked((byte)(data >> 16)));
-            await WriteAsync(unchecked((byte)(data >> 8)));
-            await WriteAsync(unchecked((byte)data));
+            if (BitConverter.IsLittleEndian)
+            {
+                await WriteAsync(unchecked((byte)(data >> 24)));
+                await WriteAsync(unchecked((byte)(data >> 16)));
+                await WriteAsync(unchecked((byte)(data >> 8)));
+                await WriteAsync(unchecked((byte)data));
+            }
+            else
+            {
+                await WriteAsync(unchecked((byte)data));
+                await WriteAsync(unchecked((byte)(data >> 8)));
+                await WriteAsync(unchecked((byte)(data >> 16)));
+                await WriteAsync(unchecked((byte)(data >> 24)));
+            }
         }
 
         public void Write(long data)
         {
-            Write(unchecked((byte)(data >> 56)));
-            Write(unchecked((byte)(data >> 48)));
-            Write(unchecked((byte)(data >> 40)));
-            Write(unchecked((byte)(data >> 32)));
-            Write(unchecked((byte)(data >> 24)));
-            Write(unchecked((byte)(data >> 16)));
-            Write(unchecked((byte)(data >> 8)));
-            Write(unchecked((byte)data));
+            if (BitConverter.IsLittleEndian)
+            {
+                Write(unchecked((byte)(data >> 56)));
+                Write(unchecked((byte)(data >> 48)));
+                Write(unchecked((byte)(data >> 40)));
+                Write(unchecked((byte)(data >> 32)));
+                Write(unchecked((byte)(data >> 24)));
+                Write(unchecked((byte)(data >> 16)));
+                Write(unchecked((byte)(data >> 8)));
+                Write(unchecked((byte)data));
+            }
+            else
+            {
+                Write(unchecked((byte)data));
+                Write(unchecked((byte)(data >> 8)));
+                Write(unchecked((byte)(data >> 16)));
+                Write(unchecked((byte)(data >> 24)));
+                Write(unchecked((byte)(data >> 32)));
+                Write(unchecked((byte)(data >> 40)));
+                Write(unchecked((byte)(data >> 48)));
+                Write(unchecked((byte)(data >> 56)));
+            }
         }
 
         public async Task WriteAsync(long data)
         {
-            await WriteAsync(unchecked((byte)(data >> 56)));
-            await WriteAsync(unchecked((byte)(data >> 48)));
-            await WriteAsync(unchecked((byte)(data >> 40)));
-            await WriteAsync(unchecked((byte)(data >> 32)));
-            await WriteAsync(unchecked((byte)(data >> 24)));
-            await WriteAsync(unchecked((byte)(data >> 16)));
-            await WriteAsync(unchecked((byte)(data >> 8)));
-            await WriteAsync(unchecked((byte)data));
+            if (BitConverter.IsLittleEndian)
+            {
+                await WriteAsync(unchecked((byte)(data >> 56)));
+                await WriteAsync(unchecked((byte)(data >> 48)));
+                await WriteAsync(unchecked((byte)(data >> 40)));
+                await WriteAsync(unchecked((byte)(data >> 32)));
+                await WriteAsync(unchecked((byte)(data >> 24)));
+                await WriteAsync(unchecked((byte)(data >> 16)));
+                await WriteAsync(unchecked((byte)(data >> 8)));
+                await WriteAsync(unchecked((byte)data));
+            }
+            else
+            {
+                await WriteAsync(unchecked((byte)data));
+                await WriteAsync(unchecked((byte)(data >> 8)));
+                await WriteAsync(unchecked((byte)(data >> 16)));
+                await WriteAsync(unchecked((byte)(data >> 24)));
+                await WriteAsync(unchecked((byte)(data >> 32)));
+                await WriteAsync(unchecked((byte)(data >> 40)));
+                await WriteAsync(unchecked((byte)(data >> 48)));
+                await WriteAsync(unchecked((byte)(data >> 56)));
+            }
         }
 
         public unsafe void Write(float data)
