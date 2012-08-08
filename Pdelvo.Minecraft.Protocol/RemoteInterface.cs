@@ -180,17 +180,21 @@ namespace Pdelvo.Minecraft.Protocol
         /// <remarks></remarks>
         public void Shutdown()
         {
-            if (!_aborting)
+            try
             {
-                _aborting = true;
-                _writeEvent.Set();
-                if (Aborted != null)
-                    Aborted(this, new RemoteInterfaceAbortedEventArgs());
+                if (!_aborting)
+                {
+                    _aborting = true;
+                    _writeEvent.Set();
+                    if (Aborted != null)
+                        Aborted(this, new RemoteInterfaceAbortedEventArgs());
+                }
+                _lowPriorityBuffer.Complete();
+                _highPriorityBuffer.Complete();
+                _packetSender.Completion.Wait();
+                EndPoint.Shutdown();
             }
-            _lowPriorityBuffer.Complete();
-            _highPriorityBuffer.Complete();
-            _packetSender.Completion.Wait();
-            EndPoint.Shutdown();
+            catch (ObjectDisposedException) { }
         }
 
         #endregion
@@ -236,7 +240,7 @@ namespace Pdelvo.Minecraft.Protocol
                     //write data
                     _writeEvent.Set();
                     if (!packet.IsDead)
-                        SendPacket(packet);
+                        await SendPacketAsync(packet);
                 }
                 if (packet == null)
                 {
@@ -249,7 +253,7 @@ namespace Pdelvo.Minecraft.Protocol
                             Shutdown();
                         }
                         if (!packet.IsDead)
-                            SendPacket(packet);
+                            await SendPacketAsync(packet);
                         //else Debug.WriteLine("Packet dropped");
                     }
                 }
