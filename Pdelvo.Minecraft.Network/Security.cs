@@ -16,10 +16,8 @@ namespace Pdelvo.Minecraft.Network
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
-        public static RSAParameters GenerateRSAKeyPair(out RSA provider)
+        public static RSAParameters GenerateRSAKeyPair(out RSACryptoServiceProvider provider)
         {
-            provider = RSA.Create();
-            provider.KeySize = 1024;
             provider = new RSACryptoServiceProvider(1024);
             return provider.ExportParameters(true);
         }
