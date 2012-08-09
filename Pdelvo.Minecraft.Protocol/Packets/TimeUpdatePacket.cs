@@ -27,9 +27,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <summary>
         /// Gets or sets the time.
         /// </summary>
-        /// <value>The time.</value>
+        /// <value>The date.</value>
         /// <remarks></remarks>
-        public long Day { get; set; }
+        public long DayTime { get; set; }
 
         /// <summary>
         /// Receives the specified reader.
@@ -41,12 +41,11 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         {
             if (reader == null)
                 throw new System.ArgumentNullException("reader");
-            Time = reader.ReadInt64();
             if (version >= 40)
-            {
-                Day = reader.ReadInt64();
-                System.Console.WriteLine(Day);
-            }
+                Time = reader.ReadInt64();
+            DayTime = reader.ReadInt64();
+
+            System.Console.WriteLine(Time + ":" + DayTime);
         }
 
         /// <summary>
@@ -60,9 +59,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (writer == null)
                 throw new System.ArgumentNullException("writer");
             writer.Write(Code);
-            writer.Write(Time);
             if (version >= 40)
-                writer.Write(Day);
+                writer.Write(Time);
+            writer.Write(DayTime);
         }
     }
 }
