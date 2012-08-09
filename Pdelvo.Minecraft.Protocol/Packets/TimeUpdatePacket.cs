@@ -44,8 +44,6 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (version >= 40)
                 Time = reader.ReadInt64();
             DayTime = reader.ReadInt64();
-
-            System.Console.WriteLine(Time + ":" + DayTime);
         }
 
         /// <summary>
