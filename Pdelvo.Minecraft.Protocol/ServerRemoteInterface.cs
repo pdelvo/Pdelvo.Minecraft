@@ -35,7 +35,9 @@ namespace Pdelvo.Minecraft.Protocol
         {
             //Server only
             RegisterPacket<LogOnResponse>(0x01);
+#pragma warning disable 618
             RegisterPacket<HandshakeResponse>(0x02);
+#pragma warning restore 618
             RegisterPacket<TimeUpdatePacket>(0x04);
             RegisterPacket<SpawnPosition>(0x06);
             RegisterPacket<UpdateHealth>(0x08);

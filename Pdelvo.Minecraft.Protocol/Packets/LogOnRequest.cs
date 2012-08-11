@@ -51,6 +51,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new System.ArgumentNullException("reader");
             if (version >= 32)
                 return;
+#pragma warning disable 618
             ProtocolVersion = reader.ReadInt32();
             UserName = reader.ReadString16();
             if (ProtocolVersion != 0)
@@ -85,6 +86,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 return;
             if (ProtocolVersion != 0)
                 version = ProtocolVersion;
+#pragma warning restore 618
             writer.Write(version);
             writer.Write(UserName);
             //Not used

@@ -259,41 +259,6 @@ namespace Pdelvo.Minecraft.Protocol
                 }
             }
         }
-        public async Task SendPacketQueuedAsync(Packet packet)
-        {
-            if (packet == null)
-                _slowQueue.Enqueue(null);
-            if (!packet.CanBeDelayed)
-            {
-                _fastQueue.Enqueue(packet);
-                _writeEvent.Set();
-            }
-            else
-            {
-                var pc = packet as PreChunk;
-                var mc = packet as MapChunk;
-                if (mc != null)
-                {
-                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
-                    {
-                        var mapChunk = r as MapChunk;
-                        return mapChunk.PositionX == mc.PositionX && mapChunk.PositionZ == mc.PositionZ;
-                    }));
-                    //_slowQueue.EnumerateItems().Where(t => t.Item is PreChunk).Each(a => a.Die(r => (r as PreChunk).X == mc.X && (r as PreChunk).Z == mc.Z));
-                }
-                else if (pc != null)
-                {
-                    _slowQueue.EnumerateItems().Where(t => t.Item is MapChunk).Each(a => a.Die(r =>
-                    {
-                        var mapChunk = r as MapChunk;
-                        return mapChunk.PositionX == pc.PositionX && mapChunk.PositionZ == pc.PositionZ;
-                    }));
-                }
-
-                _slowQueue.Enqueue(packet);
-                _writeEvent.Set();
-            }
-        }
         public void SendPacketQueued(Packet packet)
         {
             if (packet == null)
