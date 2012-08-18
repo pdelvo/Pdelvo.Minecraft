@@ -56,9 +56,8 @@ namespace Pdelvo.Minecraft.Network
             int b = Net.ReadByte();
             if (b >= byte.MinValue && b <= byte.MaxValue)
             {
-                //if (BufferEnabled)
-                    _bufferStream.WriteByte((byte) b);
-                return (byte) b;
+                _bufferStream.WriteByte((byte)b);
+                return (byte)b;
             }
             throw new EndOfStreamException();
         }
@@ -68,7 +67,6 @@ namespace Pdelvo.Minecraft.Network
             int b = await Net.ReadByteAsync();
             if (b >= byte.MinValue && b <= byte.MaxValue)
             {
-                //if (BufferEnabled)
                 _bufferStream.WriteByte((byte)b);
                 return (byte)b;
             }
@@ -77,8 +75,6 @@ namespace Pdelvo.Minecraft.Network
 
         public byte[] GetBuffer()
         {
-            //if (!BufferEnabled)
-            //    throw new InvalidOperationException("BufferEnabled must be set to true");
             byte[] b = _bufferStream.ToArray();
             _bufferStream.SetLength(0);
             return b;
@@ -100,14 +96,9 @@ namespace Pdelvo.Minecraft.Network
             return (input);
         }
 
-        //public sbyte ReadSByte()
-        //{
-        //    return unchecked((sbyte) ReadByte());
-        //}
-
         public short ReadInt16()
         {
-            return unchecked((short) ((ReadByte() << 8) | ReadByte()));
+            return unchecked((short)((ReadByte() << 8) | ReadByte()));
         }
 
         public async Task<short> ReadInt16Async()
@@ -128,16 +119,46 @@ namespace Pdelvo.Minecraft.Network
 
         public long ReadInt64()
         {
-            return unchecked((ReadByte() << 56) | (ReadByte() << 48) | (ReadByte() << 40) | (ReadByte() << 32)
-                             | (ReadByte() << 24) | (ReadByte() << 16) | (ReadByte() << 8) | ReadByte());
+            unchecked
+            {
+                byte[] l = new byte[8];
+                if (Read(l, 0, l.Length) != 8)
+                    throw new EndOfStreamException();
+
+                long p = 0;
+                p |= (long)l[0] << 56;
+                p |= (long)l[1] << 48;
+                p |= (long)l[2] << 40;
+                p |= (long)l[3] << 32;
+                p |= (long)l[4] << 24;
+                p |= (long)l[5] << 16;
+                p |= (long)l[6] << 8;
+                p |= (long)l[7];
+                return p;
+            }
+
         }
 
         public async Task<long> ReadInt64Async()
         {
-            return unchecked(((await ReadByteAsync()) << 56) | ((await ReadByteAsync()) << 48) 
-                | ((await ReadByteAsync()) << 40) | ((await ReadByteAsync()) << 32)
-                | ((await ReadByteAsync()) << 24) | ((await ReadByteAsync()) << 16) 
-                | ((await ReadByteAsync()) << 8) | (await ReadByteAsync()));
+            unchecked
+            {
+                byte[] l = new byte[8];
+                if (await ReadAsync(l, 0, l.Length) != 8)
+                    throw new EndOfStreamException();
+
+                long p = 0;
+                p |= (long)l[0] << 56;
+                p |= (long)l[1] << 48;
+                p |= (long)l[2] << 40;
+                p |= (long)l[3] << 32;
+                p |= (long)l[4] << 24;
+                p |= (long)l[5] << 16;
+                p |= (long)l[6] << 8;
+                p |= (long)l[7];
+                return p;
+            }
+
         }
 
         public unsafe float ReadSingle()
@@ -178,8 +199,6 @@ namespace Pdelvo.Minecraft.Network
         public string ReadString16()
         {
             int len = ReadInt16();
-            //if (len > maxLen)
-            //    throw new IOException("String field too long");
             if (len < 0)
             {
                 throw new ProtocolViolationException("String length less then zero");
@@ -191,8 +210,6 @@ namespace Pdelvo.Minecraft.Network
         public async Task<string> ReadString16Async()
         {
             int len = await ReadInt16Async();
-            //if (len > maxLen)
-            //    throw new IOException("String field too long");
             if (len < 0)
             {
                 throw new ProtocolViolationException("String length less then zero");
@@ -204,8 +221,6 @@ namespace Pdelvo.Minecraft.Network
         public string ReadString8()
         {
             int len = ReadInt16();
-            //if (len > maxLen)
-            //    throw new IOException("String field too long");
             byte[] b = ReadBytes(len);
             return Encoding.UTF8.GetString(b);
         }
@@ -213,8 +228,6 @@ namespace Pdelvo.Minecraft.Network
         public async Task<string> ReadString8Async()
         {
             int len = await ReadInt16Async();
-            //if (len > maxLen)
-            //    throw new IOException("String field too long");
             byte[] b = await ReadBytesAsync(len);
             return Encoding.UTF8.GetString(b);
         }
@@ -238,11 +251,6 @@ namespace Pdelvo.Minecraft.Network
         {
             return Net.WriteByteAsync(data);
         }
-
-        //public void Write(sbyte data)
-        //{
-        //    Write(unchecked((byte) data));
-        //}
 
         public void Write(short data)
         {
@@ -390,7 +398,6 @@ namespace Pdelvo.Minecraft.Network
         {
             int cnt = Net.Read(buffer, offset, count);
 
-            //if (BufferEnabled)
             _bufferStream.Write(buffer, 0, cnt);
             return cnt;
         }
@@ -399,7 +406,6 @@ namespace Pdelvo.Minecraft.Network
         {
             int cnt = await Net.ReadAsync(buffer, offset, count, token);
 
-            //if (BufferEnabled)
             _bufferStream.Write(buffer, 0, cnt);
             return cnt;
         }
