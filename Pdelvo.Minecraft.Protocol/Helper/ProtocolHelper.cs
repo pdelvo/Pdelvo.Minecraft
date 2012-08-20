@@ -32,7 +32,8 @@ namespace Pdelvo.Minecraft.Protocol.Helper
                                                                                         {36, "12w24a"},
                                                                                         {37, "12w25/26a"},
                                                                                         {38, "12w27a"},
-                                                                                        {39, "1.3 RC"}
+                                                                                        {39, "1.3"},
+                                                                                        {40, "12w32a"}
                                                                                     };
 
         /// <summary>
