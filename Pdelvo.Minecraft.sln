@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pdelvo.Minecraft.Protocol",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pdelvo.Minecraft.Network", "Pdelvo.Minecraft.Network\Pdelvo.Minecraft.Network.csproj", "{8291168C-FF6F-47F8-B166-9B5D551E7BCA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pdelvo.Minecraft.Tests", "Pdelvo.Minecraft.Tests\Pdelvo.Minecraft.Tests.csproj", "{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,14 +37,19 @@ Global
 		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{8291168C-FF6F-47F8-B166-9B5D551E7BCA}.Release|x86.ActiveCfg = Release|Any CPU
-
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D7AA8659-E3C7-4D74-A88A-C96AC1170C1D}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{15181DED-BE43-47F9-A543-0B40F4F17A27} = {CB1F716D-AE97-4D84-92A6-834B83DB6382}
-		{8291168C-FF6F-47F8-B166-9B5D551E7BCA} = {CB1F716D-AE97-4D84-92A6-834B83DB6382}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		BuildVersion_UpdateAssemblyVersion = False
