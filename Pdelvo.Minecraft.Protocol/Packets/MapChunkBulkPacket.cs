@@ -19,6 +19,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public MapChunkBulkPacket()
         {
             Code = 0x38;
+
+            ChunkData = new byte[0];
+            ChunkMetaData = Enumerable.Empty<ChunkBulkMetaData>();
         }
 
         public short Count { get; set; }

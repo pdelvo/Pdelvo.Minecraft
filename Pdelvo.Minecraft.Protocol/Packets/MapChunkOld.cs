@@ -18,6 +18,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public MapChunkOld()
         {
             Code = 0x33;
+            CompressedData = Enumerable.Empty<byte>();
         }
 
         public override bool CanBeDelayed

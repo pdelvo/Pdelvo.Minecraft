@@ -81,6 +81,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 return;
             }
 
+            if (data.Data == null) data.Data = new Dictionary<byte, object>();
+
             foreach (var item in data.Data)
             {
                 if (item.Value is byte)

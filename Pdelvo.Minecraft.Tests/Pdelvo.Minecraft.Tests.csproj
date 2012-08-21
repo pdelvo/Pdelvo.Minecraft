@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="BigEndianStreamTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PacketTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Pdelvo.Minecraft.Network\Pdelvo.Minecraft.Network.csproj">
