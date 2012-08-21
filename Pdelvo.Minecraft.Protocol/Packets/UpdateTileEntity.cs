@@ -18,6 +18,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public UpdateTileEntity()
         {
             Code = 0x84;
+
+            DataNBT = Enumerable.Empty<byte>();
         }
 
         public override bool CanBeDelayed

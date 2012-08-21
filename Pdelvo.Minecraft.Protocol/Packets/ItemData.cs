@@ -17,6 +17,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public ItemData()
         {
             Code = 0x83;
+
+            InnerData = Enumerable.Empty<byte>();
         }
 
         /// <summary>

@@ -42,11 +42,9 @@ namespace Pdelvo.Minecraft.Protocol
         /// <remarks></remarks>
         protected RemoteInterface(PacketEndPoint endPoint)
         {
-            Thread = new Thread(WriteLoop);
             EndPoint = endPoint;
 
             SetupMessageChain();
-            Thread.Start();
         }
 
         private void SetupMessageChain()
@@ -119,6 +117,7 @@ namespace Pdelvo.Minecraft.Protocol
         /// <remarks></remarks>
         public async Task Run()
         {
+            InitializeThread();
             try
             {
                 while (true)
@@ -144,6 +143,15 @@ namespace Pdelvo.Minecraft.Protocol
             if (Thread.ThreadState == System.Threading.ThreadState.Running)
                 throw new InvalidOperationException("Thread already running");
             //BeginReceivePacket();
+        }
+
+        private void InitializeThread()
+        {
+            if (Thread == null)
+            {
+                Thread = new Thread(WriteLoop);
+                Thread.Start();
+            }
         }
 
         /// <summary>
@@ -261,6 +269,7 @@ namespace Pdelvo.Minecraft.Protocol
         }
         public void SendPacketQueued(Packet packet)
         {
+            InitializeThread();
             if (packet == null)
                 _slowQueue.Enqueue(packet);
             if (!packet.CanBeDelayed)
@@ -404,6 +413,9 @@ namespace Pdelvo.Minecraft.Protocol
                 this._writeEvent.Dispose();
                 this._writeEvent = null;
             }
+
+            Thread.Abort();
+            Thread = null;
         }
 
     }
