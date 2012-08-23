@@ -44,11 +44,11 @@ namespace Pdelvo.Minecraft.Protocol
             lock (CreateCache)
             {
                 if (CreateCache.ContainsKey(type)) return CreateCache[type];
-                var dyn = new DynamicMethod("PC_FACTORY_" + type.Name, typeof (Packet), new Type[] {});
+                var dyn = new DynamicMethod("PC_FACTORY_" + type.Name, typeof(Packet), new Type[] { });
                 ILGenerator gen = dyn.GetILGenerator();
-                gen.Emit(OpCodes.Newobj, type.GetConstructor(new Type[] {})); //Constructoraufruf
+                gen.Emit(OpCodes.Newobj, type.GetConstructor(new Type[] { })); //Constructoraufruf
                 gen.Emit(OpCodes.Ret); //Rückgabe der neuen Instanz
-                var ret = (PacketCreator) dyn.CreateDelegate(typeof (PacketCreator));
+                var ret = (PacketCreator)dyn.CreateDelegate(typeof(PacketCreator));
                 CreateCache.Add(type, ret);
                 return ret;
             }
@@ -140,17 +140,7 @@ namespace Pdelvo.Minecraft.Protocol
                                       int version, int requiredVersion, int lastSupportedVersion, bool throwOnRequired,
                                       bool throwOnLast)
         {
-            if (packet == null)
-                throw new ArgumentNullException("packet");
-            bool require = (requiredVersion == -1 || requiredVersion <= version);
-            bool last = (lastSupportedVersion == -1 || lastSupportedVersion >= version);
-            if (!require && throwOnRequired)
-                throw new ArgumentException("packet does not support minecraft version", "packet",
-                                            new PacketException(packet.Code));
-            if (!last && throwOnLast)
-                throw new ArgumentException("packet does not support minecraft version", "packet",
-                                            new PacketException(packet.Code));
-            bool supported = require && last;
+            bool supported = CheckPacket(packet, version, requiredVersion, lastSupportedVersion, throwOnRequired, throwOnLast);
             if (!supported)
                 return;
             packet.SendItem(stream, version);
@@ -159,6 +149,14 @@ namespace Pdelvo.Minecraft.Protocol
         public static async Task SendPacketAsync(Packet packet, BigEndianStream stream,
                               int version, int requiredVersion, int lastSupportedVersion, bool throwOnRequired,
                               bool throwOnLast)
+        {
+            bool supported = CheckPacket(packet, version, requiredVersion, lastSupportedVersion, throwOnRequired, throwOnLast);
+            if (!supported)
+                return;
+            await packet.SendItemAsync(stream, version);
+        }
+
+        private static bool CheckPacket(Packet packet, int version, int requiredVersion, int lastSupportedVersion, bool throwOnRequired, bool throwOnLast)
         {
             if (packet == null)
                 throw new ArgumentNullException("packet");
@@ -171,9 +169,7 @@ namespace Pdelvo.Minecraft.Protocol
                 throw new ArgumentException("packet does not support minecraft version", "packet",
                                             new PacketException(packet.Code));
             bool supported = require && last;
-            if (!supported)
-                return;
-            await packet.SendItemAsync(stream, version);
+            return supported;
         }
     }
 }
