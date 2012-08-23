@@ -414,8 +414,11 @@ namespace Pdelvo.Minecraft.Protocol
                 this._writeEvent = null;
             }
 
-            Thread.Abort();
-            Thread = null;
+            if (Thread != null)
+            {
+                Thread.Abort();
+                Thread = null;
+            }
         }
 
     }
