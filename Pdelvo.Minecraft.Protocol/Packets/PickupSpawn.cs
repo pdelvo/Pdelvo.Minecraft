@@ -28,19 +28,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// </summary>
         /// <value>The item.</value>
         /// <remarks></remarks>
-        public short Item { get; set; }
-        /// <summary>
-        /// Gets or sets the count.
-        /// </summary>
-        /// <value>The count.</value>
-        /// <remarks></remarks>
-        public byte Count { get; set; }
-        /// <summary>
-        /// Gets or sets the damage data.
-        /// </summary>
-        /// <value>The damage data.</value>
-        /// <remarks></remarks>
-        public short DamageData { get; set; }
+        public ItemStack Item { get; set; }
         /// <summary>
         /// Gets or sets the X.
         /// </summary>
@@ -89,9 +77,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (reader == null)
                 throw new System.ArgumentNullException("reader");
             EntityId = reader.ReadInt32();
-            Item = reader.ReadInt16();
-            Count = reader.ReadByte();
-            DamageData = reader.ReadInt16();
+            Item = ItemStack.Read(reader);
             PositionX = reader.ReadInt32();
             PositionY = reader.ReadInt32();
             PositionZ = reader.ReadInt32();
@@ -113,8 +99,6 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(Code);
             writer.Write(EntityId);
             writer.Write(Item);
-            writer.Write(Count);
-            writer.Write(DamageData);
             writer.Write(PositionX);
             writer.Write(PositionY);
             writer.Write(PositionZ);
