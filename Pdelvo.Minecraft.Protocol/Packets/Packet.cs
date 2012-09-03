@@ -84,18 +84,14 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
         protected virtual Task OnSendAsync(BigEndianStream writer, int version)
         {
-            return Task.Run(() =>
-            {
-                OnSend(writer, version);
-            });
+            OnSend(writer, version);
+            return Task.FromResult(0);
         }
 
         protected virtual Task OnReceiveAsync(BigEndianStream reader, int version)
         {
-            return Task.Run(() =>
-            {
-                OnReceive(reader, version);
-            });
+            OnReceive(reader, version);
+            return Task.FromResult(0);
         }
 
         /// <summary>
