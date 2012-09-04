@@ -15,6 +15,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public PickupSpawn()
         {
             Code = 0x15;
+
+            Item = new ItemStack();
         }
 
         /// <summary>
@@ -77,7 +79,18 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (reader == null)
                 throw new System.ArgumentNullException("reader");
             EntityId = reader.ReadInt32();
+            if(version >=41)
             Item = ItemStack.Read(reader);
+            else
+            {
+                Item = new ItemStack
+                {
+                    ItemType = reader.ReadInt16(),
+                    Count = reader.ReadByte(),
+                    Durability = reader.ReadInt16(),
+                    AdditionalData = new byte[0]
+                };
+            }
             PositionX = reader.ReadInt32();
             PositionY = reader.ReadInt32();
             PositionZ = reader.ReadInt32();
@@ -98,7 +111,14 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new System.ArgumentNullException("writer");
             writer.Write(Code);
             writer.Write(EntityId);
+            if(version >=41)
             writer.Write(Item);
+            else
+            {
+                writer.Write(Item.ItemType);
+                writer.Write(Item.Count);
+                writer.Write(Item.Durability);
+            }
             writer.Write(PositionX);
             writer.Write(PositionY);
             writer.Write(PositionZ);
