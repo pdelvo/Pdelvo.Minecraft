@@ -8,29 +8,21 @@ namespace Pdelvo.Minecraft.Network
 {
     public static class ProtocolSecurity
     {
-        static RandomNumberGenerator _secureRandomGenerator;
+        static RandomNumberGenerator _secureRandomGenerator = RandomNumberGenerator.Create();
 
-        static ProtocolSecurity()
-        {
-            _secureRandomGenerator = RandomNumberGenerator.Create();
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
-        public static RSAParameters GenerateRSAKeyPair(out RSACryptoServiceProvider provider)
+        public static RSAParameters GenerateRsaKeyPair(out RSACryptoServiceProvider provider)
         {
             provider = new RSACryptoServiceProvider(1024);
             return provider.ExportParameters(true);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
-        internal static RSAParameters GenerateRSAPublicKey(byte[] key)
+        internal static RSAParameters GenerateRsaPublicKey(byte[] key)
         {
             AsnKeyParser parser = new AsnKeyParser(key);
             return parser.ParseRSAPublicKey();
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
-        private static RSAParameters GenerateRSAKey(byte[] key, bool isPrivate)
+        private static RSAParameters GenerateRsaKey(byte[] key, bool isPrivate)
         {
             AsnKeyParser parser = new AsnKeyParser(key);
             return isPrivate ? parser.ParseRSAPrivateKey() : parser.ParseRSAPublicKey();
@@ -42,35 +34,32 @@ namespace Pdelvo.Minecraft.Network
             return bytes;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
-        public static byte[] RSADecrypt(byte[] data, byte[] key, bool isPrivate)
+        public static byte[] RsaDecrypt(byte[] data, byte[] key, bool isPrivate)
         {
             if (data == null)
                 throw new ArgumentNullException("data");
             if (key == null)
                 throw new ArgumentNullException("key");
             var provider = RSA.Create();
-            provider.ImportParameters(GenerateRSAKey(key, isPrivate));
+            provider.ImportParameters(GenerateRsaKey(key, isPrivate));
             return provider.DecryptValue(data);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
-        public static byte[] RSADecrypt(byte[] data, RSACryptoServiceProvider provider, bool isPrivate)
+        public static byte[] RsaDecrypt(byte[] data, RSACryptoServiceProvider provider, bool isPrivate)
         {
             if (data == null)
                 throw new ArgumentNullException("data");
             return provider.Decrypt(data,false);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "RSA is the name of the encryption standard")]
-        public static byte[] RSAEncrypt(byte[] data, byte[] key, bool isPrivate)
+        public static byte[] RsaEncrypt(byte[] data, byte[] key, bool isPrivate)
         {
             if (data == null)
                 throw new ArgumentNullException("data");
             if (key == null)
                 throw new ArgumentNullException("key");
             var provider = (RSACryptoServiceProvider)RSA.Create();
-            provider.ImportParameters(GenerateRSAKey(key, isPrivate));
+            provider.ImportParameters(GenerateRsaKey(key, isPrivate));
             return provider.Encrypt(data, false);
         }
 
@@ -83,7 +72,7 @@ namespace Pdelvo.Minecraft.Network
                     if (bytes == null) throw new ArgumentNullException("bytes", "Inner array is null");
                 b.AddRange(item);
             }
-            return Cryptography.JavaHexDigest(b.ToArray());
+            return ProtocolCryptography.JavaHexDigest(b.ToArray());
         }
     }
 }

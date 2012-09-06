@@ -63,7 +63,7 @@
   <ItemGroup>
     <Compile Include="AesStream.cs" />
     <Compile Include="BigEndianStream.cs" />
-    <Compile Include="Cryptography.cs" />
+    <Compile Include="ProtocolCryptography.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FullyReadStream.cs" />
     <Compile Include="GlobalSuppressions.cs" />

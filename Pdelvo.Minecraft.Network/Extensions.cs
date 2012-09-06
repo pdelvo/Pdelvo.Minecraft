@@ -109,6 +109,8 @@ namespace Pdelvo.Minecraft.Network
 
         public static Task WriteByteAsync(this Stream stream, byte value)
         {
+            if (stream == null)
+                throw new ArgumentNullException("stream");
             return stream.WriteAsync(new[] { value }, 0, 1);
         }
     }
