@@ -404,7 +404,7 @@ namespace Pdelvo.Minecraft.Network
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            int cnt = await Net.ReadAsync(buffer, offset, count, token);
+            int cnt = await Net.ReadAsync(buffer, offset, count, cancellationToken);
 
             _bufferStream.Write(buffer, 0, cnt);
             return cnt;
