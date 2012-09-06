@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Pdelvo.Minecraft.Network
 {
     //Thanks to SirCmpwn!!!!!!!
-    public static class Cryptography
+    public static class ProtocolCryptography
     {
         public static string JavaHexDigest(byte[] data)
         {
@@ -37,7 +37,7 @@ namespace Pdelvo.Minecraft.Network
             {
                 if (p[i] < 0x10)
                     result += "0";
-                result += p[i].ToString("x"); // Converts to hex string
+                result += p[i].ToString("x", CultureInfo.InvariantCulture); // Converts to hex string
             }
             return result;
         }
@@ -59,40 +59,8 @@ namespace Pdelvo.Minecraft.Network
         }
     }
 
-    public class AsnKeyBuilder
+    public static class AsnKeyBuilder
     {
-        public class AsnMessage
-        {
-            private byte[] m_octets;
-            private String m_format;
-
-            internal int Length
-            {
-                get
-                {
-                    if (null == m_octets) { return 0; }
-                    return m_octets.Length;
-                }
-                // set { m_length = value; }
-            }
-
-            internal AsnMessage(byte[] octets, String format)
-            {
-                m_octets = octets;
-                m_format = format;
-            }
-
-            public byte[] GetBytes()
-            {
-                if (null == m_octets)
-                { return new byte[] { }; }
-
-                return m_octets;
-            }
-            internal String GetFormat()
-            { return m_format; }
-        }
-
         internal class AsnType
         {
             // Constructors
@@ -1477,6 +1445,39 @@ namespace Pdelvo.Minecraft.Network
 
             return false;
         }
+    }
+
+
+    public class AsnMessage
+    {
+        private byte[] m_octets;
+        private String m_format;
+
+        internal int Length
+        {
+            get
+            {
+                if (null == m_octets) { return 0; }
+                return m_octets.Length;
+            }
+            // set { m_length = value; }
+        }
+
+        internal AsnMessage(byte[] octets, String format)
+        {
+            m_octets = octets;
+            m_format = format;
+        }
+
+        public byte[] GetBytes()
+        {
+            if (null == m_octets)
+            { return new byte[] { }; }
+
+            return m_octets;
+        }
+        internal String GetFormat()
+        { return m_format; }
     }
 
     class AsnKeyParser

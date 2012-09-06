@@ -402,7 +402,7 @@ namespace Pdelvo.Minecraft.Network
             return cnt;
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken token)
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             int cnt = await Net.ReadAsync(buffer, offset, count, token);
 
