@@ -13,7 +13,7 @@
         /// <summary>
         /// 
         /// </summary>
-        public const int MaxSupportedClientVersion = 41;
+        public const int MaxSupportedClientVersion = 42;
         /// <summary>
         /// 
         /// </summary>
@@ -21,6 +21,6 @@
         /// <summary>
         /// 
         /// </summary>
-        public const int MaxSupportedServerVersion = 41;
+        public const int MaxSupportedServerVersion = 42;
     }
 }
