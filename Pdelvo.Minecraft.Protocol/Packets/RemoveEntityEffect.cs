@@ -6,7 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class RemoveEntityEffect : Packet
+    public class RemoveEntityEffect : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="RemoveEntityEffect"/> class.

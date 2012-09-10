@@ -7,7 +7,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class LogOnResponse : Packet
+    public class LogOnResponse : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LogOnResponse"/> class.

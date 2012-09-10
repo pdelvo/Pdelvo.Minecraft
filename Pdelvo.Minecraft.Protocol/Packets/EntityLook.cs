@@ -7,7 +7,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class EntityLook : Packet
+    public class EntityLook : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EntityLook"/> class.

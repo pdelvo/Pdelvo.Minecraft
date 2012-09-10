@@ -11,7 +11,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(35)]
-    public class DiggingProgressPacket : Packet
+    public class DiggingProgressPacket : Packet, IEntityPacket
     {
         public int EntityId { get; set; }
         public int PositionX { get; set; }

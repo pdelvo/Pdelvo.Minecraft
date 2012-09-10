@@ -7,7 +7,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class AttachEntity : Packet
+    public class AttachEntity : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="AttachEntity"/> class.

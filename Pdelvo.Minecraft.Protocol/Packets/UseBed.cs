@@ -6,7 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class UseBed : Packet
+    public class UseBed : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="UseBed"/> class.
