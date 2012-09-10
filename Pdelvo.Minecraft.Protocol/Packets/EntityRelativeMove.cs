@@ -7,7 +7,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class EntityRelativeMove : Packet
+    public class EntityRelativeMove : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EntityRelativeMove"/> class.

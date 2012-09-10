@@ -6,7 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class PickupSpawn : Packet
+    public class PickupSpawn : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="PickupSpawn"/> class.

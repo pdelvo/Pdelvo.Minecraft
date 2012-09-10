@@ -6,7 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class Thunderbolt : Packet
+    public class Thunderbolt : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Thunderbolt"/> class.

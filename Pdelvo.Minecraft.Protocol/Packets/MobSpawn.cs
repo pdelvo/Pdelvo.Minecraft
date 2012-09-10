@@ -6,7 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
-    public class MobSpawn : Packet
+    public class MobSpawn : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MobSpawn"/> class.

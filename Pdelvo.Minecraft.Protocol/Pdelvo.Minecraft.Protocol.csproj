@@ -136,6 +136,7 @@
     <Compile Include="Packets\HandshakeRequest.cs" />
     <Compile Include="Packets\HandshakeResponse.cs" />
     <Compile Include="Packets\HoldingChange.cs" />
+    <Compile Include="Packets\IEntityPacket.cs" />
     <Compile Include="Packets\IncrementStatistic.cs" />
     <Compile Include="Packets\InvalidState.cs" />
     <Compile Include="Packets\InventoryPacket.cs" />

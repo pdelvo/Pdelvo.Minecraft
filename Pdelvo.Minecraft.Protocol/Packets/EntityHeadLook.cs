@@ -8,7 +8,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(24)]
-    public class EntityHeadLook : Packet
+    public class EntityHeadLook : Packet, IEntityPacket
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EntityHeadLook"/> class.
