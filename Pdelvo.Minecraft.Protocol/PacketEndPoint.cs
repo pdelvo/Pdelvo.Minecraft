@@ -460,5 +460,13 @@ namespace Pdelvo.Minecraft.Protocol
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification="Its a protocol version name")]
         public bool Use12w18aFix { get; set; }
+
+        public IEnumerable<KeyValuePair<byte, IEnumerable<Type>>> SupportedPackets
+        {
+            get
+            {
+                return _packets.Select(a => new KeyValuePair<byte, IEnumerable<Type>>(a.Key, a.Value));
+            }
+        }
     }
 }
