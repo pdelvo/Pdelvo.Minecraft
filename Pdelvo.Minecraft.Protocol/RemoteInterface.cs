@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using Pdelvo.Minecraft.Protocol.Helper;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 
 namespace Pdelvo.Minecraft.Protocol
 {
@@ -31,10 +30,6 @@ namespace Pdelvo.Minecraft.Protocol
         LockFreeQueue<Dieable<Packet>> _fastQueue = new LockFreeQueue<Dieable<Packet>>();
         LockFreeQueue<Dieable<Packet>> _slowQueue = new LockFreeQueue<Dieable<Packet>>();
 
-        ActionBlock<Packet> _packetSender;
-        BufferBlock<Packet> _highPriorityBuffer;
-        BufferBlock<Packet> _lowPriorityBuffer;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="RemoteInterface"/> class.
         /// </summary>
@@ -43,26 +38,6 @@ namespace Pdelvo.Minecraft.Protocol
         protected RemoteInterface(PacketEndPoint endPoint)
         {
             EndPoint = endPoint;
-
-            SetupMessageChain();
-        }
-
-        private void SetupMessageChain()
-        {
-            _highPriorityBuffer = new BufferBlock<Packet>();
-            _lowPriorityBuffer = new BufferBlock<Packet>();
-            //_priorityChooser.Completion.ContinueWith(a =>
-            //{
-            //});
-            _packetSender = new ActionBlock<Packet>(async p =>
-            {
-                await SendPacketAsync(p);
-                if (_highPriorityBuffer.Completion.IsCompleted && _lowPriorityBuffer.Completion.IsCompleted)
-                    _packetSender.Complete();
-            });
-
-            _lowPriorityBuffer.LinkTo(_packetSender, new DataflowLinkOptions { PropagateCompletion = true });
-            _highPriorityBuffer.LinkTo(_packetSender, new DataflowLinkOptions { PropagateCompletion = true });
         }
 
         #region IMinecraftRemoteInterface Members
@@ -197,9 +172,6 @@ namespace Pdelvo.Minecraft.Protocol
                     if (Aborted != null)
                         Aborted(this, new RemoteInterfaceAbortedEventArgs());
                 }
-                _lowPriorityBuffer.Complete();
-                _highPriorityBuffer.Complete();
-                _packetSender.Completion.Wait();
                 EndPoint.Shutdown();
             }
             catch (ObjectDisposedException) { }
