@@ -46,7 +46,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// </summary>
         /// <value><c>true</c> if shift; otherwise, <c>false</c>.</value>
         /// <remarks></remarks>
-        public bool Shift { get; set; }
+        public byte Shift { get; set; }
         /// <summary>
         /// Gets or sets the item.
         /// </summary>
@@ -68,7 +68,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             Slot = reader.ReadInt16();
             RightClick = reader.ReadByte();
             ActionNumber = reader.ReadInt16();
-            Shift = reader.ReadBoolean();
+            if (version >= 45)
+                Shift = reader.ReadByte();
+            else
+                Shift = reader.ReadBoolean() ? (byte)1 : (byte)0;
             Item = ItemStack.Read(reader);
         }
 
@@ -87,7 +90,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(Slot);
             writer.Write(RightClick);
             writer.Write(ActionNumber);
-            writer.Write(Shift);
+            if (version >= 45)
+                writer.Write(Shift);
+            else
+                writer.Write(Shift != 0);
             writer.Write(Item);
         }
     }
