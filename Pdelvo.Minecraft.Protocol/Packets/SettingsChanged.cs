@@ -13,6 +13,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public int ViewDistance { get; set; }
         public ChatFlags ChatOptions { get; set; }
         public byte Difficulty { get; set; }
+        public bool ShowCape { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmptyPacket"/> class.
@@ -21,6 +22,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public SettingsChanged()
         {
             Code = 0xCC;
+
+            ShowCape = true;
         }
 
         /// <summary>
@@ -42,6 +45,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 ChatOptions = (ChatFlags)reader.ReadByte();
             if (version >= 32)
                 Difficulty = reader.ReadByte();
+            if (version >= 46)
+                ShowCape = reader.ReadBoolean();
         }
 
         /// <summary>
@@ -64,6 +69,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 writer.Write((byte)ChatOptions);
             if (version >= 32)
                 writer.Write(Difficulty);
+            if (version >= 46)
+                writer.Write(ShowCape);
         }
     }
 
