@@ -87,7 +87,7 @@ namespace Pdelvo.Minecraft.Protocol.Helper
         }
 
         /// <summary>
-        /// Builds the mot D string.
+        /// Builds the mot D string in minecraft version pre 12w42b
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="usedSlots">The used slots.</param>
@@ -97,6 +97,19 @@ namespace Pdelvo.Minecraft.Protocol.Helper
         public static string BuildMotDString(string message, int usedSlots, int maxSlots)
         {
             return string.Format(CultureInfo.InvariantCulture, "{0}§{1}§{2}", message, usedSlots, maxSlots);
+        }
+
+        /// <summary>
+        /// Builds the mot D string in minecraft version pre 12w42b
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="usedSlots">The used slots.</param>
+        /// <param name="maxSlots">The max slots.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string BuildMotDString(byte protocolVersion, string versionString, string message, int usedSlots, int maxSlots)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "§1\0{0}\0{1}\0{2}\0{3}\0{4}", protocolVersion, versionString, message, usedSlots, maxSlots);
         }
 
         /// <summary>
@@ -110,6 +123,19 @@ namespace Pdelvo.Minecraft.Protocol.Helper
         public static Packet BuildMotDPacket(string message, int usedSlots, int maxSlots)
         {
             return new DisconnectPacket { Reason = BuildMotDString(message, usedSlots, maxSlots) };
+        }
+
+        /// <summary>
+        /// Builds the mot D packet in minecraft version pre 12w42b
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="usedSlots">The used slots.</param>
+        /// <param name="maxSlots">The max slots.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static Packet BuildMotDPacket(byte protocolVersion, string versionString, string message, int usedSlots, int maxSlots)
+        {
+            return new DisconnectPacket { Reason = BuildMotDString(protocolVersion, versionString, message, usedSlots, maxSlots) };
         }
 
         /// <summary>

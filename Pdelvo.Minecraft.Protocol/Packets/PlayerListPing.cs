@@ -1,4 +1,5 @@
 ﻿using Pdelvo.Minecraft.Network;
+using System;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
@@ -8,6 +9,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// <remarks></remarks>
     public class PlayerListPing : Packet
     {
+        public byte MagicByte { get; set; }
         /// <summary>
         /// Initializes a new instance of the <see cref="PlayerListPing"/> class.
         /// </summary>
@@ -15,6 +17,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public PlayerListPing()
         {
             Code = 0xFE;
+            MagicByte = 1;
         }
 
         /// <summary>
@@ -27,6 +30,14 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         {
             if (reader == null)
                 throw new System.ArgumentNullException("reader");
+            try
+            {
+                MagicByte = reader.ReadByte();
+            }
+            catch (Exception)
+            {
+                MagicByte = 0;
+            }
         }
 
         /// <summary>
@@ -40,6 +51,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (writer == null)
                 throw new System.ArgumentNullException("writer");
             writer.Write(Code);
+
+            if (version >= 47) writer.Write(MagicByte);
         }
     }
 }
