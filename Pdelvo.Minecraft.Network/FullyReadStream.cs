@@ -198,5 +198,29 @@ namespace Pdelvo.Minecraft.Network
                 await ReadDataAsync(1, token);
             return _readAheadBuffer[_readAheadOffset];
         }
+
+        public override int ReadTimeout
+        {
+            get
+            {
+                return _sourceStream.ReadTimeout;
+            }
+            set
+            {
+                _sourceStream.ReadTimeout = value;
+            }
+        }
+
+        public override int WriteTimeout
+        {
+            get
+            {
+                return _sourceStream.WriteTimeout;
+            }
+            set
+            {
+                _sourceStream.WriteTimeout = value;
+            }
+        }
     }
 }

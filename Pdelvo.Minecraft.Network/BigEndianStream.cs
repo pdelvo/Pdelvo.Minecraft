@@ -478,5 +478,29 @@ namespace Pdelvo.Minecraft.Network
                 return i;
             }
         }
+
+        public override int ReadTimeout
+        {
+            get
+            {
+                return Net.ReadTimeout;
+            }
+            set
+            {
+                Net.ReadTimeout = value;
+            }
+        }
+
+        public override int WriteTimeout
+        {
+            get
+            {
+                return Net.WriteTimeout;
+            }
+            set
+            {
+                Net.WriteTimeout = value;
+            }
+        }
     }
 }
