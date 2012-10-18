@@ -30,19 +30,14 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         {
             if (reader == null)
                 throw new System.ArgumentNullException("reader");
-            var timeOut = reader.ReadTimeout;
             try
             {
-                reader.ReadTimeout = 0;
+                reader.ReadTimeout = 1;
                 MagicByte = reader.ReadByte();
             }
             catch (Exception)
             {
                 MagicByte = 0;
-            }
-            finally
-            {
-                reader.ReadTimeout = timeOut;
             }
         }
 
