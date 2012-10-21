@@ -7,6 +7,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class EntityRelativeMove : Packet, IEntityPacket
     {
         /// <summary>

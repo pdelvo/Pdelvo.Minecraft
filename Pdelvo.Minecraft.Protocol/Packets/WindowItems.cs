@@ -8,6 +8,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class WindowItems : Packet
     {
         /// <summary>

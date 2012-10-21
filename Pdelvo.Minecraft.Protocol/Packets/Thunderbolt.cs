@@ -6,6 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class Thunderbolt : Packet, IEntityPacket
     {
         /// <summary>

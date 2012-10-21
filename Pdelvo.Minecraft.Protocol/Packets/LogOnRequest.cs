@@ -8,6 +8,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [Obsolete("Replaced by RespawnRequestPacket")]
+    [PacketUsage(PacketUsage.ClientToServer)]
     public class LogOnRequest : Packet
     {
         /// <summary>

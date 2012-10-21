@@ -6,6 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
+    [PacketUsage(PacketUsage.Both)]
     public class KeepAlive : Packet
     {
         /// <summary>

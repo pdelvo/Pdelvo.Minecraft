@@ -9,6 +9,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(23)]
+    [PacketUsage(PacketUsage.Both)]
     public class PluginMessage : Packet
     {
         /// <summary>

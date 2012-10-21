@@ -7,6 +7,7 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     [RequireVersion(30)]
+    [PacketUsage(PacketUsage.Both)]
     public class AutoCompletion : Packet
     {
         public string UserNameList { get; set; }

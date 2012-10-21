@@ -9,6 +9,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(27, throwException: true)]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class MapChunk : Packet
     {
         /// <summary>

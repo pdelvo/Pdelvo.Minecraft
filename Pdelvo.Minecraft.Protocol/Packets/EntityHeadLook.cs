@@ -8,6 +8,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(24)]
+    [PacketUsage(PacketUsage.Both)]
     public class EntityHeadLook : Packet, IEntityPacket
     {
         /// <summary>

@@ -10,6 +10,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(versionNumber: 28, throwException: true)]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class MultiBlockChange : Packet
     {
         /// <summary>

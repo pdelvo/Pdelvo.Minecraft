@@ -7,6 +7,7 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     [RequireVersion(31, true)]
+    [PacketUsage(PacketUsage.Both)]
     public class EncryptionKeyResponse : Packet
     {
         public IEnumerable<byte> SharedKey { get; set; }

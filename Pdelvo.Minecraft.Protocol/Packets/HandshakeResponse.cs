@@ -8,6 +8,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [Obsolete("In the newest protocol version this packet is not longer used")]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class HandshakeResponse : Packet
     {
         /// <summary>

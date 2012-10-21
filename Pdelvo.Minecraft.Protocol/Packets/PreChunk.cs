@@ -7,6 +7,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [LastSupportedVersion(31)]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class PreChunk : Packet
     {
         /// <summary>

@@ -7,6 +7,7 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     [RequireVersion(31, true)]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class EncryptionKeyRequest : Packet
     {
         public string ServerId { get; set; }

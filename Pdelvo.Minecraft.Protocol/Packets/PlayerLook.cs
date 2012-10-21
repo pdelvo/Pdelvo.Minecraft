@@ -6,6 +6,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
+    [PacketUsage(PacketUsage.ClientToServer)]
     public class PlayerLook : Packet
     {
         /// <summary>

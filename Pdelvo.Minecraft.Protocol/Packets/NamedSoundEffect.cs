@@ -7,6 +7,7 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     [RequireVersion(32)]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class NamedSoundEffect : Packet
     {
         public string Name { get; set; }

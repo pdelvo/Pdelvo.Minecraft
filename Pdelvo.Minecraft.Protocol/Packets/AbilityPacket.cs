@@ -7,6 +7,7 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     [RequireVersion(29)]
+    [PacketUsage(PacketUsage.Both)]
     public class AbilityPacket : Packet
     {
         public bool Flying { get; set; }

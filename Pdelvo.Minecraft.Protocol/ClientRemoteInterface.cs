@@ -32,22 +32,7 @@ namespace Pdelvo.Minecraft.Protocol
         /// <remarks></remarks>
         protected void PrepareEndPoint()
         {
-            //Client only
-            RegisterPacket<LogOnRequest>(0x01);
-            RegisterPacket<HandshakeRequest>(0x02);
-            RegisterPacket<UseEntity>(0x07);
-            RegisterPacket<Player>(0x0A);
-            RegisterPacket<PlayerPosition>(0x0B);
-            RegisterPacket<PlayerLook>(0x0C);
-            RegisterPacket<PlayerPositionLookRequest>(0x0D);
-            RegisterPacket<WindowClick>(0x66);
-            RegisterPacket<PlayerListPing>(0xFE);
-            RegisterPacket<SettingsChanged>(0xCC);
-            RegisterPacket<RespawnRequestPacket>(0xCD);
-            RegisterPacket<EncryptionKeyResponse>(0xFC);
-
-            //General packets
-            ProtocolHelper.RegisterGeneralPackets(EndPoint);
+            ProtocolHelper.RegisterPackets(EndPoint, PacketUsage.ClientToServer);
         }
 
         public static ClientRemoteInterface Create(Stream baseStream, int protocolVersion)

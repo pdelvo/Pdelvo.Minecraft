@@ -7,6 +7,7 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     [RequireVersion(30)]
+    [PacketUsage(PacketUsage.ClientToServer)]
     public class SettingsChanged : Packet 
     {
         public string Language { get; set; }

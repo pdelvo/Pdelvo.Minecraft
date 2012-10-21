@@ -7,6 +7,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
+    [PacketUsage(PacketUsage.ClientToServer)]
     public class PlayerListPing : Packet
     {
         public byte MagicByte { get; set; }

@@ -156,15 +156,31 @@ namespace Pdelvo.Minecraft.Protocol
         /// <typeparam name="T"></typeparam>
         /// <param name="id">The id.</param>
         /// <remarks></remarks>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter", Justification="For compile time validation")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter", Justification = "For compile time validation")]
         public void RegisterPacket<T>(byte id) where T : Packet, new()
         {
             //if (_packets.ContainsKey(id))
             //    throw new ArgumentException("Id already exists: " + id.ToString("X"), "id");
             if (_packets.ContainsKey(id))
-                _packets[id].Add(typeof (T));
+                _packets[id].Add(typeof(T));
             else
-                _packets.Add(id, new List<Type> {typeof (T)});
+                _packets.Add(id, new List<Type> { typeof(T) });
+        }
+
+
+        /// <summary>
+        /// Registers the packet.
+        /// </summary>
+        /// <param name="id">The id.</param>
+        /// <remarks></remarks>
+        public void RegisterPacket(byte id, Type type)
+        {
+            //if (_packets.ContainsKey(id))
+            //    throw new ArgumentException("Id already exists: " + id.ToString("X"), "id");
+            if (_packets.ContainsKey(id))
+                _packets[id].Add(type);
+            else
+                _packets.Add(id, new List<Type> { type });
         }
 
         /// <summary>

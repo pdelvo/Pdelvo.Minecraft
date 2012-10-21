@@ -7,6 +7,7 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     [RequireVersion(36)]
+    [PacketUsage(PacketUsage.ClientToServer)]
     public class RespawnRequestPacket : Packet
     {
         public byte ResponseType { get; set; }

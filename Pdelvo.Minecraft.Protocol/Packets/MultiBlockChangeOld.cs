@@ -8,6 +8,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [LastSupportedVersion(27, true)]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class MultiBlockChangeOld : Packet
     {
         /// <summary>

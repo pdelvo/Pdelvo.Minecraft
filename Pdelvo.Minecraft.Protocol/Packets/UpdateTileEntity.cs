@@ -9,6 +9,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks></remarks>
     [RequireVersion(25)]
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class UpdateTileEntity : Packet
     {
         /// <summary>

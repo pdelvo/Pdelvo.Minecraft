@@ -9,6 +9,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// 
     /// </summary>
     /// <remarks></remarks>
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class EntityDestroy : Packet
     {
         /// <summary>
