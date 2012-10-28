@@ -1,4 +1,4 @@
-﻿namespace Pdelvo.Minecraft.Protocol.Helper
+namespace Pdelvo.Minecraft.Protocol.Helper
 {
     /// <summary>
     /// 
