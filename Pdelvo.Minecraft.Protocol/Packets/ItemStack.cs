@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Pdelvo.Minecraft.Network;
 using System.Text;
 using System.Collections.Generic;
