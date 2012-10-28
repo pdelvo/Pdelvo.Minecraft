@@ -84,5 +84,45 @@ namespace Pdelvo.Minecraft.Tests
                 }
             }
         }
+
+        [TestMethod]
+        public async Task TestPlayerPing()
+        {
+            var playerPing = new PlayerListPing();
+            var stream = new MemoryStream();
+            var oldServer = new ServerRemoteInterface(
+                new BigEndianStream(stream), 46);
+
+            oldServer.SendPacketAsync(playerPing);
+            stream.Seek(0, SeekOrigin.Begin);
+            var server = new ClientRemoteInterface(
+                new BigEndianStream(stream), 0);
+
+            var packet = server.ReadPacket();
+
+            Assert.IsInstanceOfType(packet, typeof(PlayerListPing));
+
+            var p = packet as PlayerListPing;
+
+            Assert.AreEqual(p.MagicByte, 0);
+
+            stream = new MemoryStream();
+            var newServer = new ServerRemoteInterface(
+                new BigEndianStream(stream), 47);
+
+            newServer.SendPacketAsync(playerPing);
+            stream.Seek(0, SeekOrigin.Begin);
+            server = new ClientRemoteInterface(
+                new BigEndianStream(stream), 0);
+
+            packet = server.ReadPacket();
+
+            Assert.IsInstanceOfType(packet, typeof(PlayerListPing));
+
+            p = packet as PlayerListPing;
+
+            Assert.AreEqual(p.MagicByte, 1);
+            
+        }
     }
 }
