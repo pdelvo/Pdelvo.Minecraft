@@ -33,7 +33,11 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new System.ArgumentNullException("reader");
             try
             {
-                reader.ReadTimeout = 1;
+                try
+                {
+                    reader.ReadTimeout = 1;
+                }
+                catch (InvalidOperationException) { }
                 MagicByte = reader.ReadByte();
             }
             catch (Exception)
@@ -54,7 +58,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new System.ArgumentNullException("writer");
             writer.Write(Code);
 
-            if (version >= 47) writer.Write(MagicByte);
+            if (version >= 47) 
+                writer.Write(MagicByte);
         }
     }
 }
