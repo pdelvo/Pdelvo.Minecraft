@@ -1,4 +1,4 @@
-﻿using Pdelvo.Minecraft.Protocol.Helper;
+using Pdelvo.Minecraft.Protocol.Helper;
 using Pdelvo.Minecraft.Protocol.Packets;
 using Pdelvo.Minecraft.Network;
 using System.IO;

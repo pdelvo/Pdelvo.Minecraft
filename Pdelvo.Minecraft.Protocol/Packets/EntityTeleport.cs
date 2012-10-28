@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
