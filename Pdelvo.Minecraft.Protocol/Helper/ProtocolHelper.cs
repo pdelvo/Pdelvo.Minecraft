@@ -53,7 +53,7 @@ namespace Pdelvo.Minecraft.Protocol.Helper
             {
                 var usage = item.GetCustomAttribute<PacketUsageAttribute>();
 
-                if ((usage.PacketUsage & PacketUsage.Both) == PacketUsage.Both)
+                if ((usage.PacketUsage & packetUsage) == packetUsage)
                 {
                     var packet = (Packet)Activator.CreateInstance(item);
 
