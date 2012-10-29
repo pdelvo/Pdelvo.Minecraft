@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 
 namespace Pdelvo.Minecraft.Network
 {
+    //Thanks to _x68x for this!
     public class AesStream : Stream
     {
         CryptoStream _encryptStream;
