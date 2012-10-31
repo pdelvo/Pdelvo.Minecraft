@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
@@ -11,12 +7,12 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     {
         // See the attribute guidelines at 
         //  http://go.microsoft.com/fwlink/?LinkId=85236
-        readonly PacketUsage _packetUsage;
+        private readonly PacketUsage _packetUsage;
 
         // This is a positional argument
         public PacketUsageAttribute(PacketUsage packetUsage)
         {
-            this._packetUsage = packetUsage;
+            _packetUsage = packetUsage;
         }
 
         public PacketUsage PacketUsage
@@ -25,7 +21,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         }
     }
 
-    public enum PacketUsage : int
+    public enum PacketUsage
     {
         None = 0x00,
         ServerToClient = 0x01,

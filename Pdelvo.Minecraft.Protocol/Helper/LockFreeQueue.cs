@@ -5,35 +5,36 @@ namespace Pdelvo.Minecraft.Protocol.Helper
 {
     //author: floste
     /// <summary>
-    /// 
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <remarks></remarks>
+    /// <typeparam name="T"> </typeparam>
+    /// <remarks>
+    /// </remarks>
     public class LockFreeQueue<T>
     {
         /// <summary>
-        /// 
         /// </summary>
         private Node first;
+
         /// <summary>
-        /// 
         /// </summary>
         private Node last;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LockFreeQueue&lt;T&gt;"/> class.
+        ///   Initializes a new instance of the <see cref="LockFreeQueue&lt;T&gt;" /> class.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public LockFreeQueue()
         {
-            first = new Node();
+            first = new Node ();
             last = first;
         }
 
         /// <summary>
-        /// Gets the count.
+        ///   Gets the count.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public int Count
         {
             get
@@ -50,24 +51,26 @@ namespace Pdelvo.Minecraft.Protocol.Helper
         }
 
         /// <summary>
-        /// Enqueues the specified item.
+        ///   Enqueues the specified item.
         /// </summary>
-        /// <param name="item">The item.</param>
-        /// <remarks></remarks>
+        /// <param name="item"> The item. </param>
+        /// <remarks>
+        /// </remarks>
         public void Enqueue(T item)
         {
-            var newNode = new Node();
+            var newNode = new Node ();
             newNode.item = item;
             Node old = Interlocked.Exchange(ref first, newNode);
             old.next = newNode;
         }
 
         /// <summary>
-        /// Dequeues the specified item.
+        ///   Dequeues the specified item.
         /// </summary>
-        /// <param name="item">The item.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="item"> The item. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         public bool TryDequeue(out T item)
         {
             Node current;
@@ -87,9 +90,9 @@ namespace Pdelvo.Minecraft.Protocol.Helper
 
         public IEnumerable<T> EnumerateItems()
         {
-            for (var current = last.next; current != null; current = current.next)
+            for (Node current = last.next; current != null; current = current.next)
             {
-                var value =  current.item;
+                T value = current.item;
                 if (value != null)
                     yield return value;
             }
@@ -98,17 +101,16 @@ namespace Pdelvo.Minecraft.Protocol.Helper
         #region Nested type: Node
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         private class Node
         {
             /// <summary>
-            /// 
             /// </summary>
             public T item;
+
             /// <summary>
-            /// 
             /// </summary>
             public Node next;
         }

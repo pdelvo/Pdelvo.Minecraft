@@ -1,21 +1,21 @@
 using System;
-using System.IO;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Pdelvo.Minecraft.Network
 {
     public class FullyReadStream : Stream
     {
+        private readonly List<byte> _buffer = new List<byte> ();
         private readonly byte[] _readAheadBuffer;
-        private Stream _sourceStream;
         private long _pos; // pseudo-position
         private int _readAheadLength;
         private int _readAheadOffset;
-        private List<byte> _buffer = new List<byte>();
+        private Stream _sourceStream;
 
         public FullyReadStream(Stream sourceStream)
         {
@@ -52,21 +52,33 @@ namespace Pdelvo.Minecraft.Network
         public override long Position
         {
             get { return _pos; }
-            set { throw new InvalidOperationException(); }
+            set { throw new InvalidOperationException (); }
+        }
+
+        public override int ReadTimeout
+        {
+            get { return _sourceStream.ReadTimeout; }
+            set { _sourceStream.ReadTimeout = value; }
+        }
+
+        public override int WriteTimeout
+        {
+            get { return _sourceStream.WriteTimeout; }
+            set { _sourceStream.WriteTimeout = value; }
         }
 
         public override void Flush()
         {
-            _sourceStream.Write(_buffer.ToArray(), 0, _buffer.Count);
-            _sourceStream.Flush();
-            _buffer.Clear();
+            _sourceStream.Write(_buffer.ToArray (), 0, _buffer.Count);
+            _sourceStream.Flush ();
+            _buffer.Clear ();
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            await _sourceStream.WriteAsync(_buffer.ToArray(), 0, _buffer.Count);
-            await _sourceStream.FlushAsync();
-            _buffer.Clear();
+            await _sourceStream.WriteAsync(_buffer.ToArray (), 0, _buffer.Count);
+            await _sourceStream.FlushAsync ();
+            _buffer.Clear ();
         }
 
         [DebuggerStepThrough]
@@ -96,7 +108,7 @@ namespace Pdelvo.Minecraft.Network
         }
 
         [DebuggerStepThrough]
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, System.Threading.CancellationToken token)
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken token)
         {
             int bytesRead = 0;
             while (bytesRead < count)
@@ -127,7 +139,7 @@ namespace Pdelvo.Minecraft.Network
             _readAheadOffset = 0;
             _readAheadLength = _sourceStream.Read(_readAheadBuffer, 0, maxCount);
             if (_readAheadLength == 0)
-                throw new EndOfStreamException();
+                throw new EndOfStreamException ();
         }
 
         private Task ReadDataAsync(int maxCount)
@@ -140,7 +152,7 @@ namespace Pdelvo.Minecraft.Network
             _readAheadOffset = 0;
             _readAheadLength = await _sourceStream.ReadAsync(_readAheadBuffer, 0, maxCount, token);
             if (_readAheadLength == 0)
-                throw new EndOfStreamException();
+                throw new EndOfStreamException ();
         }
 
         [DebuggerStepThrough]
@@ -153,18 +165,18 @@ namespace Pdelvo.Minecraft.Network
                 _readAheadLength = 0;
                 return 0;
             }
-            throw new NotSupportedException();
+            throw new NotSupportedException ();
         }
 
         public override void SetLength(long value)
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException ();
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
             //_sourceStream.Write(buffer, offset, count);
-             _buffer.AddRange(buffer.Skip(offset).Take(count));
+            _buffer.AddRange(buffer.Skip(offset).Take(count));
         }
 
         public override void WriteByte(byte value)
@@ -175,7 +187,7 @@ namespace Pdelvo.Minecraft.Network
 
         protected override void Dispose(bool disposing)
         {
-            _sourceStream.Dispose();
+            _sourceStream.Dispose ();
             base.Dispose(disposing);
         }
 
@@ -197,30 +209,6 @@ namespace Pdelvo.Minecraft.Network
             if (_readAheadLength - _readAheadOffset == 0)
                 await ReadDataAsync(1, token);
             return _readAheadBuffer[_readAheadOffset];
-        }
-
-        public override int ReadTimeout
-        {
-            get
-            {
-                return _sourceStream.ReadTimeout;
-            }
-            set
-            {
-                _sourceStream.ReadTimeout = value;
-            }
-        }
-
-        public override int WriteTimeout
-        {
-            get
-            {
-                return _sourceStream.WriteTimeout;
-            }
-            set
-            {
-                _sourceStream.WriteTimeout = value;
-            }
         }
     }
 }

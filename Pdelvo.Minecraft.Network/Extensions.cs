@@ -15,7 +15,7 @@ namespace Pdelvo.Minecraft.Network
             IPEndPoint ep;
             if (TryParseEndPoint(str, out ep))
                 return ep;
-            throw new FormatException();
+            throw new FormatException ();
         }
 
         public static bool TryParseEndPoint(string str, out IPEndPoint value)
@@ -33,7 +33,7 @@ namespace Pdelvo.Minecraft.Network
                 adr =
                     (from x in Dns.GetHostEntry(ep[0]).AddressList
                      where x.AddressFamily == AddressFamily.InterNetwork
-                     select x).FirstOrDefault();
+                     select x).FirstOrDefault ();
             if (adr == null)
                 return false;
             int port;
@@ -45,12 +45,12 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// Connects the specified socket.
+        ///   Connects the specified socket.
         /// </summary>
-        /// <param name="socket">The socket.</param>
-        /// <param name="host">The host.</param>
-        /// <param name="port">The port.</param>
-        /// <param name="timeout">The timeout.</param>
+        /// <param name="socket"> The socket. </param>
+        /// <param name="host"> The host. </param>
+        /// <param name="port"> The port. </param>
+        /// <param name="timeout"> The timeout. </param>
         public static bool Connect(this Socket socket, string host, int port, TimeSpan timeout)
         {
             return AsyncConnect(socket, (s, a, o) => s.BeginConnect(host, port, a, o), timeout);
@@ -62,30 +62,30 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// Connects the specified socket.
+        ///   Connects the specified socket.
         /// </summary>
-        /// <param name="socket">The socket.</param>
-        /// <param name="addresses">The addresses.</param>
-        /// <param name="port">The port.</param>
-        /// <param name="timeout">The timeout.</param>
+        /// <param name="socket"> The socket. </param>
+        /// <param name="addresses"> The addresses. </param>
+        /// <param name="port"> The port. </param>
+        /// <param name="timeout"> The timeout. </param>
         public static bool Connect(this Socket socket, IPAddress[] addresses, int port, TimeSpan timeout)
         {
             return AsyncConnect(socket, (s, a, o) => s.BeginConnect(addresses, port, a, o), timeout);
         }
 
         /// <summary>
-        /// Asyncs the connect.
+        ///   Asyncs the connect.
         /// </summary>
-        /// <param name="socket">The socket.</param>
-        /// <param name="connect">The connect.</param>
-        /// <param name="timeout">The timeout.</param>
+        /// <param name="socket"> The socket. </param>
+        /// <param name="connect"> The connect. </param>
+        /// <param name="timeout"> The timeout. </param>
         private static bool AsyncConnect(Socket socket, Func<Socket, AsyncCallback, object, IAsyncResult> connect,
                                          TimeSpan timeout)
         {
             IAsyncResult asyncResult = connect(socket, null, null);
             if (!asyncResult.AsyncWaitHandle.WaitOne(timeout))
             {
-                socket.Close();
+                socket.Close ();
                 socket.EndConnect(asyncResult);
                 return false;
             }
@@ -97,7 +97,7 @@ namespace Pdelvo.Minecraft.Network
         {
             try
             {
-                byte[] buffer = new byte[1];
+                var buffer = new byte[1];
                 int count = await stream.ReadAsync(buffer, 0, 1);
                 return count == 0 ? -1 : buffer[0];
             }
@@ -111,7 +111,7 @@ namespace Pdelvo.Minecraft.Network
         {
             if (stream == null)
                 throw new ArgumentNullException("stream");
-            return stream.WriteAsync(new[] { value }, 0, 1);
+            return stream.WriteAsync(new[] {value}, 0, 1);
         }
     }
 }

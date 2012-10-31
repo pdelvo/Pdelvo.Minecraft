@@ -4,17 +4,18 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     [Obsolete("Replaced by RespawnRequestPacket")]
     [PacketUsage(PacketUsage.ClientToServer)]
     public class LogOnRequest : Packet
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="LogOnRequest"/> class.
+        ///   Initializes a new instance of the <see cref="LogOnRequest" /> class.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public LogOnRequest()
         {
             Code = 1;
@@ -22,67 +23,75 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         }
 
         /// <summary>
-        /// Gets or sets the protocol version.
+        ///   Gets or sets the protocol version.
         /// </summary>
-        /// <value>The protocol version.</value>
-        /// <remarks></remarks>
-        [Obsolete("In newer version of the protocol the protocol version is not longer sent by the LogOnRequest packet")]
+        /// <value> The protocol version. </value>
+        /// <remarks>
+        /// </remarks>
+        [Obsolete("In newer version of the protocol the protocol version is not longer sent by the LogOnRequest packet")
+        ]
         public int ProtocolVersion { get; set; }
+
         /// <summary>
-        /// Gets or sets the username.
+        ///   Gets or sets the username.
         /// </summary>
-        /// <value>The username.</value>
-        /// <remarks></remarks>
+        /// <value> The username. </value>
+        /// <remarks>
+        /// </remarks>
         public string UserName { get; set; }
+
         /// <summary>
-        /// Gets or sets the unknown.
+        ///   Gets or sets the unknown.
         /// </summary>
-        /// <value>The unknown.</value>
-        /// <remarks></remarks>
+        /// <value> The unknown. </value>
+        /// <remarks>
+        /// </remarks>
         public string Unknown { get; set; }
 
         /// <summary>
-        /// Receives the specified reader.
+        ///   Receives the specified reader.
         /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="reader"> The reader. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnReceive(BigEndianStream reader, int version)
         {
             if (reader == null)
-                throw new System.ArgumentNullException("reader");
+                throw new ArgumentNullException("reader");
             if (version >= 32)
                 return;
 #pragma warning disable 618
-            ProtocolVersion = reader.ReadInt32();
-            UserName = reader.ReadString16();
+            ProtocolVersion = reader.ReadInt32 ();
+            UserName = reader.ReadString16 ();
             if (ProtocolVersion != 0)
                 version = ProtocolVersion;
             //Not used
             if (version <= 27)
-                reader.ReadInt64();
+                reader.ReadInt64 ();
             if (version >= 23 && version <= 30)
-                Unknown = reader.ReadString16();
-            reader.ReadInt32();
+                Unknown = reader.ReadString16 ();
+            reader.ReadInt32 ();
             if (version >= 27)
-                reader.ReadInt32();
+                reader.ReadInt32 ();
             else
-                reader.ReadByte();
-            reader.ReadByte();
-            reader.ReadByte();
-            reader.ReadByte();
+                reader.ReadByte ();
+            reader.ReadByte ();
+            reader.ReadByte ();
+            reader.ReadByte ();
         }
 
         /// <summary>
-        /// Sends the specified writer.
+        ///   Sends the specified writer.
         /// </summary>
-        /// <param name="writer">The writer.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="writer"> The writer. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnSend(BigEndianStream writer, int version)
         {
             if (writer == null)
-                throw new System.ArgumentNullException("writer");
+                throw new ArgumentNullException("writer");
             writer.Write(Code);
             if (version >= 32)
                 return;

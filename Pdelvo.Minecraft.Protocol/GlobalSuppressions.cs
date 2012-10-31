@@ -8,4 +8,6 @@
 // "In Unterdrückungsdatei".
 // Sie müssen dieser Datei nicht manuell Unterdrückungen hinzufügen.
 
-[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA2210:AssembliesShouldHaveValidStrongNames")]
+using System.Diagnostics.CodeAnalysis;
+
+[assembly: SuppressMessage("Microsoft.Design", "CA2210:AssembliesShouldHaveValidStrongNames")]

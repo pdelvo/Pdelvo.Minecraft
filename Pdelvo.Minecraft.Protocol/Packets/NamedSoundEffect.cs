@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
@@ -10,6 +7,16 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     [PacketUsage(PacketUsage.ServerToClient)]
     public class NamedSoundEffect : Packet
     {
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="EmptyPacket" /> class.
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        public NamedSoundEffect()
+        {
+            Code = 0x3E;
+        }
+
         public string Name { get; set; }
         public int PositionX { get; set; }
         public int PositionY { get; set; }
@@ -18,45 +25,38 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public byte Pitch { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EmptyPacket"/> class.
+        ///   Receives the specified reader.
         /// </summary>
-        /// <remarks></remarks>
-        public NamedSoundEffect()
-        {
-            Code = 0x3E;
-        }
-
-        /// <summary>
-        /// Receives the specified reader.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="reader"> The reader. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnReceive(BigEndianStream reader, int version)
         {
             if (reader == null)
-                throw new System.ArgumentNullException("reader");
-            Name = reader.ReadString16();
-            PositionX = reader.ReadInt32();
-            PositionY = reader.ReadInt32();
-            PositionZ = reader.ReadInt32();
+                throw new ArgumentNullException("reader");
+            Name = reader.ReadString16 ();
+            PositionX = reader.ReadInt32 ();
+            PositionY = reader.ReadInt32 ();
+            PositionZ = reader.ReadInt32 ();
             if (version >= 37)
-                Volume = reader.ReadSingle();
+                Volume = reader.ReadSingle ();
             else
-                Volume = reader.ReadByte();
-            Pitch = reader.ReadByte();
+                Volume = reader.ReadByte ();
+            Pitch = reader.ReadByte ();
         }
 
         /// <summary>
-        /// Sends the specified writer.
+        ///   Sends the specified writer.
         /// </summary>
-        /// <param name="writer">The writer.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="writer"> The writer. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnSend(BigEndianStream writer, int version)
         {
             if (writer == null)
-                throw new System.ArgumentNullException("writer");
+                throw new ArgumentNullException("writer");
             writer.Write(Code);
             writer.Write(Name);
             writer.Write(PositionX);
@@ -65,7 +65,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (version >= 37)
                 writer.Write(Volume);
             else
-                writer.Write((byte)Volume);
+                writer.Write((byte) Volume);
             writer.Write(Pitch);
         }
     }

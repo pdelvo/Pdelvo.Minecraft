@@ -6,9 +6,9 @@ using Pdelvo.Minecraft.Network;
 namespace Pdelvo.Minecraft.Protocol
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     [Serializable]
     public class PacketException : ProtocolViolationException
     {
@@ -18,55 +18,61 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         public PacketException(string message)
-            :base(message)
+            : base(message)
         {
-
         }
 
         public PacketException(string message, Exception exception)
-            :base(message,exception)
+            : base(message, exception)
         {
-
         }
 
         protected PacketException(SerializationInfo info, StreamingContext context)
-            :base (info, context)
+            : base(info, context)
         {
             if (info == null) throw new ArgumentNullException("info");
             Code = info.GetByte("Code");
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PacketException"/> class.
+        ///   Initializes a new instance of the <see cref="PacketException" /> class.
         /// </summary>
-        /// <param name="code">The code.</param>
-        /// <remarks></remarks>
+        /// <param name="code"> The code. </param>
+        /// <remarks>
+        /// </remarks>
         public PacketException(byte code)
         {
             Code = code;
         }
 
         /// <summary>
-        /// Gets or sets the code.
+        ///   Gets or sets the code.
         /// </summary>
-        /// <value>The code.</value>
-        /// <remarks></remarks>
+        /// <value> The code. </value>
+        /// <remarks>
+        /// </remarks>
         public byte Code { get; set; }
 
         /// <summary>
-        /// Gets the help code.
+        ///   Gets the help code.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public string HelpCode
         {
-            get { return string.Format(CultureInfo.CurrentCulture, "Packet Exception [0x{0:X2}] -  - {1}", Code, base.Message); }
+            get
+            {
+                return string.Format(CultureInfo.CurrentCulture, "Packet Exception [0x{0:X2}] -  - {1}", Code,
+                                     base.Message);
+            }
         }
 
         /// <summary>
-        /// Ruft eine Meldung ab, die die aktuelle Ausnahme beschreibt.
+        ///   Ruft eine Meldung ab, die die aktuelle Ausnahme beschreibt.
         /// </summary>
-        /// <returns>Die Fehlermeldung, die die Ursache der Ausnahme erklärt, bzw. eine leere Zeichenfolge ("").</returns>
-        /// <remarks></remarks>
+        /// <returns> Die Fehlermeldung, die die Ursache der Ausnahme erklärt, bzw. eine leere Zeichenfolge (""). </returns>
+        /// <remarks>
+        /// </remarks>
         public override string Message
         {
             get { return string.Format(CultureInfo.CurrentCulture, "Packet Exception [0x{0:X2}] - {1}", Code, base.Message); }

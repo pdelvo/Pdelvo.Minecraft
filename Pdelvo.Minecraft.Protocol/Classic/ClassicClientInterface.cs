@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Pdelvo.Minecraft.Network;
 using Pdelvo.Minecraft.Protocol.Classic.Packets;
 
@@ -16,13 +11,14 @@ namespace Pdelvo.Minecraft.Protocol.Classic
             //_thread.Name = "Client Thread";
             stream.Context = PacketContext.Client;
 
-            PrepareEndPoint();
+            PrepareEndPoint ();
         }
 
         /// <summary>
-        /// Prepares the end point.
+        ///   Prepares the end point.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         protected void PrepareEndPoint()
         {
             RegisterPacket<PlayerIdentification>(0x00);

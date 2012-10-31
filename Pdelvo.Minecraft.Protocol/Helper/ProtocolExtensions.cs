@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Pdelvo.Minecraft.Protocol.Helper
 {
@@ -13,7 +11,7 @@ namespace Pdelvo.Minecraft.Protocol.Helper
                 throw new ArgumentNullException("items");
             if (action == null)
                 throw new ArgumentNullException("action");
-            foreach (var item in items)
+            foreach (T item in items)
             {
                 action(item);
             }
