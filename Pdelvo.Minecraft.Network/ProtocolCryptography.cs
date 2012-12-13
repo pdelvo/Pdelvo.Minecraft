@@ -1,54 +1,59 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Security.Permissions;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Pdelvo.Minecraft.Network
 {
-    //Thanks to SirCmpwn!!!!!!!
+    //Thanks to SirCmpwn!
     public static class ProtocolCryptography
     {
+        /// <summary>
+        /// Produces a Java-style SHA-1 hex digest of the given data.
+        /// </summary>
         public static string JavaHexDigest(byte[] data)
         {
-            var sha1 = SHA1.Create();
+            SHA1 sha1 = SHA1.Create ();
             byte[] hash = sha1.ComputeHash(data);
             bool negative = (hash[0] & 0x80) == 0x80;
             if (negative) // check for negative hashes
                 hash = TwosCompliment(hash);
             // Create the string and trim away the zeroes
-            string digest = GetHexString(hash).Trim('0');
+            string digest = GetHexString(hash).TrimStart('0');
             if (negative)
                 digest = "-" + digest;
             return digest;
         }
 
+        /// <summary>
+        /// Converts the given n-bit little-endian unsigned number into
+        /// lowercase hexadecimal form.
+        /// </summary>
         private static string GetHexString(byte[] p)
         {
             string result = "";
             for (int i = 0; i < p.Length; i++)
-            {
-                if (p[i] < 0x10)
-                    result += "0";
-                result += p[i].ToString("x", CultureInfo.InvariantCulture); // Converts to hex string
-            }
+                result += p[i].ToString("x2", CultureInfo.InvariantCulture);
             return result;
         }
 
-        private static byte[] TwosCompliment(byte[] p) // little endian
+        /// <summary>
+        /// Given an array that represents an n-bit little-endian signed number,
+        /// the two's compliment (negation) is produced.
+        /// </summary>
+        private static byte[] TwosCompliment(byte[] p)
         {
             int i;
             bool carry = true;
             for (i = p.Length - 1; i >= 0; i--)
             {
-                p[i] = (byte)~p[i];
+                p[i] = (byte) ~p[i];
                 if (carry)
                 {
                     carry = p[i] == 0xFF;
@@ -61,216 +66,18 @@ namespace Pdelvo.Minecraft.Network
 
     public static class AsnKeyBuilder
     {
-        internal class AsnType
-        {
-            // Constructors
-            // No default - must specify tag and data
-
-            public AsnType(byte tag, byte octet)
-            {
-                m_raw = false;
-                m_tag = new byte[] { tag };
-                m_octets = new byte[] { octet };
-            }
-
-            public AsnType(byte tag, byte[] octets)
-            {
-                m_raw = false;
-                m_tag = new byte[] { tag };
-                m_octets = octets;
-            }
-
-            public AsnType(byte tag, byte[] length, byte[] octets)
-            {
-                m_raw = true;
-                m_tag = new byte[] { tag };
-                m_length = length;
-                m_octets = octets;
-            }
-
-            private bool m_raw;
-
-            private bool Raw
-            {
-                get { return m_raw; }
-                set { m_raw = value; }
-            }
-
-            // Setters and Getters
-            private byte[] m_tag;
-            public byte[] Tag
-            {
-                get
-                {
-                    if (null == m_tag)
-                        return EMPTY;
-                    return m_tag;
-                }
-                // set { m_tag = value; }
-            }
-
-            private byte[] m_length;
-            public byte[] Length
-            {
-                get
-                {
-                    if (null == m_length)
-                        return EMPTY;
-                    return m_length;
-                }
-                // set { m_length = value; }
-            }
-
-            private byte[] m_octets;
-            public byte[] Octets
-            {
-                get
-                {
-                    if (null == m_octets)
-                    { return EMPTY; }
-                    return m_octets;
-                }
-                set
-                { m_octets = value; }
-            }
-
-            // Methods
-            internal byte[] GetBytes()
-            {
-                // Created raw by user
-                // return the bytes....
-                if (true == m_raw)
-                {
-                    return Concatenate(
-                      new byte[][] { m_tag, m_length, m_octets }
-                    );
-                }
-
-                SetLength();
-
-                // Special case
-                // Null does not use length
-                if (0x05 == m_tag[0])
-                {
-                    return Concatenate(
-                      new byte[][] { m_tag, m_octets }
-                    );
-                }
-
-                return Concatenate(
-                  new byte[][] { m_tag, m_length, m_octets }
-                );
-            }
-
-            private void SetLength()
-            {
-                if (null == m_octets)
-                {
-                    m_length = ZERO;
-                    return;
-                }
-
-                // Special case
-                // Null does not use length
-                if (0x05 == m_tag[0])
-                {
-                    m_length = EMPTY;
-                    return;
-                }
-
-                byte[] length = null;
-
-                // Length: 0 <= l < 0x80
-                if (m_octets.Length < 0x80)
-                {
-                    length = new byte[1];
-                    length[0] = (byte)m_octets.Length;
-                }
-                // 0x80 < length <= 0xFF
-                else if (m_octets.Length <= 0xFF)
-                {
-                    length = new byte[2];
-                    length[0] = 0x81;
-                    length[1] = (byte)((m_octets.Length & 0xFF));
-                }
-
-                //
-                // We should almost never see these...
-                //
-
-                // 0xFF < length <= 0xFFFF
-                else if (m_octets.Length <= 0xFFFF)
-                {
-                    length = new byte[3];
-                    length[0] = 0x82;
-                    length[1] = (byte)((m_octets.Length & 0xFF00) >> 8);
-                    length[2] = (byte)((m_octets.Length & 0xFF));
-                }
-
-                // 0xFFFF < length <= 0xFFFFFF
-                else if (m_octets.Length <= 0xFFFFFF)
-                {
-                    length = new byte[4];
-                    length[0] = 0x83;
-                    length[1] = (byte)((m_octets.Length & 0xFF0000) >> 16);
-                    length[2] = (byte)((m_octets.Length & 0xFF00) >> 8);
-                    length[3] = (byte)((m_octets.Length & 0xFF));
-                }
-                // 0xFFFFFF < length <= 0xFFFFFFFF
-                else
-                {
-                    length = new byte[5];
-                    length[0] = 0x84;
-                    length[1] = (byte)((m_octets.Length & 0xFF000000) >> 24);
-                    length[2] = (byte)((m_octets.Length & 0xFF0000) >> 16);
-                    length[3] = (byte)((m_octets.Length & 0xFF00) >> 8);
-                    length[4] = (byte)((m_octets.Length & 0xFF));
-                }
-
-                m_length = length;
-            }
-
-            private byte[] Concatenate(byte[][] values)
-            {
-                // Nothing in, nothing out
-                if (IsEmpty(values))
-                    return new byte[] { };
-
-                int length = 0;
-                foreach (byte[] b in values)
-                {
-                    if (null != b) length += b.Length;
-                }
-
-                byte[] cated = new byte[length];
-
-                int current = 0;
-                foreach (byte[] b in values)
-                {
-                    if (null != b)
-                    {
-                        Array.Copy(b, 0, cated, current, b.Length);
-                        current += b.Length;
-                    }
-                }
-
-                return cated;
-            }
-        };
-
-        private static byte[] ZERO = new byte[] { 0 };
-        private static byte[] EMPTY = new byte[] { };
+        private static readonly byte[] ZERO = new byte[] {0};
+        private static readonly byte[] EMPTY = new byte[] {};
 
         // PublicKeyInfo (X.509 compatible) message
         /// <summary>
-        /// Returns the AsnMessage representing the X.509 PublicKeyInfo.
+        ///   Returns the AsnMessage representing the X.509 PublicKeyInfo.
         /// </summary>
-        /// <param name="publicKey">The DSA key to be encoded.</param>
-        /// <returns>Returns the AsnType representing the
-        /// X.509 PublicKeyInfo.</returns>
-        /// <seealso cref="PrivateKeyToPKCS8(DSAParameters)"/>
-        /// <seealso cref="PrivateKeyToPKCS8(RSAParameters)"/>
-        /// <seealso cref="PublicKeyToX509(RSAParameters)"/>
+        /// <param name="publicKey"> The DSA key to be encoded. </param>
+        /// <returns> Returns the AsnType representing the X.509 PublicKeyInfo. </returns>
+        /// <seealso cref="PrivateKeyToPKCS8(DSAParameters)" />
+        /// <seealso cref="PrivateKeyToPKCS8(RSAParameters)" />
+        /// <seealso cref="PublicKeyToX509(RSAParameters)" />
         internal static AsnMessage PublicKeyToX509(DSAParameters publicKey)
         {
             // Value Type cannot be null
@@ -294,14 +101,14 @@ namespace Pdelvo.Minecraft.Network
             AsnType g = CreateIntegerPos(publicKey.G);
 
             // Sequence - DSA-Params
-            AsnType dssParams = CreateSequence(new AsnType[] { p, q, g });
+            AsnType dssParams = CreateSequence(new[] {p, q, g});
 
             // OID - packed 1.2.840.10040.4.1
             //   { 0x2A, 0x86, 0x48, 0xCE, 0x38, 0x04, 0x01 }
             AsnType oid = CreateOid("1.2.840.10040.4.1");
 
             // Sequence
-            AsnType algorithmID = CreateSequence(new AsnType[] { oid, dssParams });
+            AsnType algorithmID = CreateSequence(new[] {oid, dssParams});
 
             // Public Key Y
             AsnType y = CreateIntegerPos(publicKey.Y);
@@ -309,21 +116,20 @@ namespace Pdelvo.Minecraft.Network
 
             // Sequence 'A'
             AsnType publicKeyInfo =
-              CreateSequence(new AsnType[] { algorithmID, key });
+                CreateSequence(new[] {algorithmID, key});
 
-            return new AsnMessage(publicKeyInfo.GetBytes(), "X.509");
+            return new AsnMessage(publicKeyInfo.GetBytes (), "X.509");
         }
 
         // PublicKeyInfo (X.509 compatible) message
         /// <summary>
-        /// Returns the AsnMessage representing the X.509 PublicKeyInfo.
+        ///   Returns the AsnMessage representing the X.509 PublicKeyInfo.
         /// </summary>
-        /// <param name="publicKey">The RSA key to be encoded.</param>
-        /// <returns>Returns the AsnType representing the
-        /// X.509 PublicKeyInfo.</returns>
-        /// <seealso cref="PrivateKeyToPKCS8(DSAParameters)"/>
-        /// <seealso cref="PrivateKeyToPKCS8(RSAParameters)"/>
-        /// <seealso cref="PublicKeyToX509(DSAParameters)"/>
+        /// <param name="publicKey"> The RSA key to be encoded. </param>
+        /// <returns> Returns the AsnType representing the X.509 PublicKeyInfo. </returns>
+        /// <seealso cref="PrivateKeyToPKCS8(DSAParameters)" />
+        /// <seealso cref="PrivateKeyToPKCS8(RSAParameters)" />
+        /// <seealso cref="PublicKeyToX509(DSAParameters)" />
         public static AsnMessage PublicKeyToX509(RSAParameters publicKey)
         {
             // Value Type cannot be null
@@ -344,32 +150,31 @@ namespace Pdelvo.Minecraft.Network
             //   { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 }
             AsnType oid = CreateOid("1.2.840.113549.1.1.1");
             AsnType algorithmID =
-              CreateSequence(new AsnType[] { oid, CreateNull() });
+                CreateSequence(new[] {oid, CreateNull ()});
 
             AsnType n = CreateIntegerPos(publicKey.Modulus);
             AsnType e = CreateIntegerPos(publicKey.Exponent);
             AsnType key = CreateBitString(
-              CreateSequence(new AsnType[] { n, e })
-            );
+                CreateSequence(new[] {n, e})
+                );
 
             AsnType publicKeyInfo =
-              CreateSequence(new AsnType[] { algorithmID, key });
+                CreateSequence(new[] {algorithmID, key});
 
-            return new AsnMessage(publicKeyInfo.GetBytes(), "X.509");
+            return new AsnMessage(publicKeyInfo.GetBytes (), "X.509");
         }
 
         // PKCS #8, Section 6 (PrivateKeyInfo) message
         // !!!!!!!!!!!!!!! Unencrypted !!!!!!!!!!!!!!!
         /// <summary>
-        /// Returns AsnMessage representing the unencrypted
-        /// PKCS #8 PrivateKeyInfo.
+        ///   Returns AsnMessage representing the unencrypted
+        ///   PKCS #8 PrivateKeyInfo.
         /// </summary>
-        /// <param name="privateKey">The DSA key to be encoded.</param>
-        /// <returns>Returns the AsnType representing the unencrypted
-        /// PKCS #8 PrivateKeyInfo.</returns>
-        /// <seealso cref="PrivateKeyToPKCS8(RSAParameters)"/>
-        /// <seealso cref="PublicKeyToX509(DSAParameters)"/>
-        /// <seealso cref="PublicKeyToX509(RSAParameters)"/>
+        /// <param name="privateKey"> The DSA key to be encoded. </param>
+        /// <returns> Returns the AsnType representing the unencrypted PKCS #8 PrivateKeyInfo. </returns>
+        /// <seealso cref="PrivateKeyToPKCS8(RSAParameters)" />
+        /// <seealso cref="PublicKeyToX509(DSAParameters)" />
+        /// <seealso cref="PublicKeyToX509(RSAParameters)" />
         internal static AsnMessage PrivateKeyToPKCS8(DSAParameters privateKey)
         {
             // Value Type cannot be null
@@ -396,14 +201,14 @@ namespace Pdelvo.Minecraft.Network
             AsnType q = CreateIntegerPos(privateKey.Q);
             AsnType g = CreateIntegerPos(privateKey.G);
 
-            AsnType dssParams = CreateSequence(new AsnType[] { p, q, g });
+            AsnType dssParams = CreateSequence(new[] {p, q, g});
 
             // OID - packed 1.2.840.10040.4.1
             //   { 0x2A, 0x86, 0x48, 0xCE, 0x38, 0x04, 0x01 }
             AsnType oid = CreateOid("1.2.840.10040.4.1");
 
             // AlgorithmIdentifier
-            AsnType algorithmID = CreateSequence(new AsnType[] { oid, dssParams });
+            AsnType algorithmID = CreateSequence(new[] {oid, dssParams});
 
             // Private Key X
             AsnType x = CreateIntegerPos(privateKey.X);
@@ -411,23 +216,22 @@ namespace Pdelvo.Minecraft.Network
 
             // Sequence
             AsnType privateKeyInfo =
-              CreateSequence(new AsnType[] { version, algorithmID, key });
+                CreateSequence(new[] {version, algorithmID, key});
 
-            return new AsnMessage(privateKeyInfo.GetBytes(), "PKCS#8");
+            return new AsnMessage(privateKeyInfo.GetBytes (), "PKCS#8");
         }
 
         // PKCS #8, Section 6 (PrivateKeyInfo) message
         // !!!!!!!!!!!!!!! Unencrypted !!!!!!!!!!!!!!!
         /// <summary>
-        /// Returns AsnMessage representing the unencrypted
-        /// PKCS #8 PrivateKeyInfo.
+        ///   Returns AsnMessage representing the unencrypted
+        ///   PKCS #8 PrivateKeyInfo.
         /// </summary>
-        /// <param name="privateKey">The RSA key to be encoded.</param>
-        /// <returns>Returns the AsnType representing the unencrypted
-        /// PKCS #8 PrivateKeyInfo.</returns>
-        /// <seealso cref="PrivateKeyToPKCS8(DSAParameters)"/>
-        /// <seealso cref="PublicKeyToX509(DSAParameters)"/>
-        /// <seealso cref="PublicKeyToX509(RSAParameters)"/>
+        /// <param name="privateKey"> The RSA key to be encoded. </param>
+        /// <returns> Returns the AsnType representing the unencrypted PKCS #8 PrivateKeyInfo. </returns>
+        /// <seealso cref="PrivateKeyToPKCS8(DSAParameters)" />
+        /// <seealso cref="PublicKeyToX509(DSAParameters)" />
+        /// <seealso cref="PublicKeyToX509(RSAParameters)" />
         internal static AsnMessage PrivateKeyToPKCS8(RSAParameters privateKey)
         {
             // Value Type cannot be null
@@ -462,43 +266,39 @@ namespace Pdelvo.Minecraft.Network
             AsnType iq = CreateIntegerPos(privateKey.InverseQ);
 
             // Version - 0 (v1998)
-            AsnType version = CreateInteger(new byte[] { 0 });
+            AsnType version = CreateInteger(new byte[] {0});
 
             // octstring = OCTETSTRING(SEQUENCE(INTEGER(0)INTEGER(N)...))
             AsnType key = CreateOctetString(
-              CreateSequence(new AsnType[] { version, n, e, d, p, q, dp, dq, iq })
-            );
+                CreateSequence(new[] {version, n, e, d, p, q, dp, dq, iq})
+                );
 
             // OID - packed 1.2.840.113549.1.1.1
             //   { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 }
-            AsnType algorithmID = CreateSequence(new AsnType[] { CreateOid("1.2.840.113549.1.1.1"), CreateNull() }
-            );
+            AsnType algorithmID = CreateSequence(new[] {CreateOid("1.2.840.113549.1.1.1"), CreateNull ()}
+                );
 
             // PrivateKeyInfo
             AsnType privateKeyInfo =
-              CreateSequence(new AsnType[] { version, algorithmID, key });
+                CreateSequence(new[] {version, algorithmID, key});
 
-            return new AsnMessage(privateKeyInfo.GetBytes(), "PKCS#8");
+            return new AsnMessage(privateKeyInfo.GetBytes (), "PKCS#8");
         }
 
         /// <summary>
-        /// <para>An ordered collection of one or more types.
-        /// Returns the AsnType representing an ASN.1 encoded sequence.</para>
-        /// <para>If the AsnType is null, an empty sequence (length 0)
-        /// is returned.</para>
+        ///   <para> An ordered collection of one or more types. Returns the AsnType representing an ASN.1 encoded sequence. </para>
+        ///   <para> If the AsnType is null, an empty sequence (length 0) is returned. </para>
         /// </summary>
-        /// <param name="value">An AsnType consisting of
-        /// a single value to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded sequence.</returns>
-        /// <seealso cref="CreateSet(AsnType)"/>
-        /// <seealso cref="CreateSet(AsnType[])"/> 
-        /// <seealso cref="CreateSetOf(AsnType)"/>
-        /// <seealso cref="CreateSetOf(AsnType[])"/>
-        /// <seealso cref="CreateSequence(AsnType)"/>
-        /// <seealso cref="CreateSequence(AsnType[])"/>
-        /// <seealso cref="CreateSequenceOf(AsnType)"/>
-        /// <seealso cref="CreateSequenceOf(AsnType[])"/>
+        /// <param name="value"> An AsnType consisting of a single value to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded sequence. </returns>
+        /// <seealso cref="CreateSet(AsnType)" />
+        /// <seealso cref="CreateSet(AsnType[])" />
+        /// <seealso cref="CreateSetOf(AsnType)" />
+        /// <seealso cref="CreateSetOf(AsnType[])" />
+        /// <seealso cref="CreateSequence(AsnType)" />
+        /// <seealso cref="CreateSequence(AsnType[])" />
+        /// <seealso cref="CreateSequenceOf(AsnType)" />
+        /// <seealso cref="CreateSequenceOf(AsnType[])" />
         internal static AsnType CreateSequence(AsnType value)
         {
             // Should be at least 1...
@@ -506,30 +306,28 @@ namespace Pdelvo.Minecraft.Network
 
             // One or more required
             if (IsEmpty(value))
-            { throw new ArgumentException("A sequence requires at least one value."); }
+            {
+                throw new ArgumentException("A sequence requires at least one value.");
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
-            return new AsnType(0x30, value.GetBytes());
+            return new AsnType(0x30, value.GetBytes ());
         }
 
         /// <summary>
-        /// <para>An ordered collection of one or more types.
-        /// Returns the AsnType representing an ASN.1 encoded sequence.</para>
-        /// <para>If the AsnType is null, an
-        /// empty sequence (length 0) is returned.</para>
+        ///   <para> An ordered collection of one or more types. Returns the AsnType representing an ASN.1 encoded sequence. </para>
+        ///   <para> If the AsnType is null, an empty sequence (length 0) is returned. </para>
         /// </summary>
-        /// <param name="values">An array of AsnType consisting of
-        /// the values in the collection to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded Set.</returns>
-        /// <seealso cref="CreateSet(AsnType)"/>
-        /// <seealso cref="CreateSet(AsnType[])"/> 
-        /// <seealso cref="CreateSetOf(AsnType)"/>
-        /// <seealso cref="CreateSetOf(AsnType[])"/>
-        /// <seealso cref="CreateSequence(AsnType)"/>
-        /// <seealso cref="CreateSequence(AsnType[])"/>
-        /// <seealso cref="CreateSequenceOf(AsnType)"/>
-        /// <seealso cref="CreateSequenceOf(AsnType[])"/>
+        /// <param name="values"> An array of AsnType consisting of the values in the collection to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded Set. </returns>
+        /// <seealso cref="CreateSet(AsnType)" />
+        /// <seealso cref="CreateSet(AsnType[])" />
+        /// <seealso cref="CreateSetOf(AsnType)" />
+        /// <seealso cref="CreateSetOf(AsnType[])" />
+        /// <seealso cref="CreateSequence(AsnType)" />
+        /// <seealso cref="CreateSequence(AsnType[])" />
+        /// <seealso cref="CreateSequenceOf(AsnType)" />
+        /// <seealso cref="CreateSequenceOf(AsnType[])" />
         internal static AsnType CreateSequence(AsnType[] values)
         {
             // Should be at least 1...
@@ -537,86 +335,80 @@ namespace Pdelvo.Minecraft.Network
 
             // One or more required
             if (IsEmpty(values))
-            { throw new ArgumentException("A sequence requires at least one value."); }
+            {
+                throw new ArgumentException("A sequence requires at least one value.");
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
             return new AsnType((0x10 | 0x20), Concatenate(values));
         }
 
         /// <summary>
-        /// <para>An ordered collection zero, one or more types.
-        /// Returns the AsnType representing an ASN.1 encoded sequence.</para>
-        /// <para>If the AsnType value is null,an
-        /// empty sequence (length 0) is returned.</para>
+        ///   <para> An ordered collection zero, one or more types. Returns the AsnType representing an ASN.1 encoded sequence. </para>
+        ///   <para> If the AsnType value is null,an empty sequence (length 0) is returned. </para>
         /// </summary>
-        /// <param name="value">An AsnType consisting of
-        /// a single value to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded sequence.</returns>
-        /// <seealso cref="CreateSet(AsnType)"/>
-        /// <seealso cref="CreateSet(AsnType[])"/> 
-        /// <seealso cref="CreateSetOf(AsnType)"/>
-        /// <seealso cref="CreateSetOf(AsnType[])"/>
-        /// <seealso cref="CreateSequence(AsnType)"/>
-        /// <seealso cref="CreateSequence(AsnType[])"/>
-        /// <seealso cref="CreateSequenceOf(AsnType)"/>
-        /// <seealso cref="CreateSequenceOf(AsnType[])"/>
+        /// <param name="value"> An AsnType consisting of a single value to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded sequence. </returns>
+        /// <seealso cref="CreateSet(AsnType)" />
+        /// <seealso cref="CreateSet(AsnType[])" />
+        /// <seealso cref="CreateSetOf(AsnType)" />
+        /// <seealso cref="CreateSetOf(AsnType[])" />
+        /// <seealso cref="CreateSequence(AsnType)" />
+        /// <seealso cref="CreateSequence(AsnType[])" />
+        /// <seealso cref="CreateSequenceOf(AsnType)" />
+        /// <seealso cref="CreateSequenceOf(AsnType[])" />
         internal static AsnType CreateSequenceOf(AsnType value)
         {
             // From the ASN.1 Mailing List
             if (IsEmpty(value))
-            { return new AsnType(0x30, EMPTY); }
+            {
+                return new AsnType(0x30, EMPTY);
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
-            return new AsnType(0x30, value.GetBytes());
+            return new AsnType(0x30, value.GetBytes ());
         }
 
         /// <summary>
-        /// <para>An ordered collection zero, one or more types.
-        /// Returns the AsnType representing an ASN.1 encoded sequence.</para>
-        /// <para>If the AsnType array is null or the array is 0 length,
-        /// an empty sequence (length 0) is returned.</para>
+        ///   <para> An ordered collection zero, one or more types. Returns the AsnType representing an ASN.1 encoded sequence. </para>
+        ///   <para> If the AsnType array is null or the array is 0 length, an empty sequence (length 0) is returned. </para>
         /// </summary>
-        /// <param name="values">An AsnType consisting of
-        /// the values in the collection to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded sequence.</returns>
-        /// <seealso cref="CreateSet(AsnType)"/>
-        /// <seealso cref="CreateSet(AsnType[])"/> 
-        /// <seealso cref="CreateSetOf(AsnType)"/>
-        /// <seealso cref="CreateSetOf(AsnType[])"/>
-        /// <seealso cref="CreateSequence(AsnType)"/>
-        /// <seealso cref="CreateSequence(AsnType[])"/>
-        /// <seealso cref="CreateSequenceOf(AsnType)"/>
-        /// <seealso cref="CreateSequenceOf(AsnType[])"/>
+        /// <param name="values"> An AsnType consisting of the values in the collection to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded sequence. </returns>
+        /// <seealso cref="CreateSet(AsnType)" />
+        /// <seealso cref="CreateSet(AsnType[])" />
+        /// <seealso cref="CreateSetOf(AsnType)" />
+        /// <seealso cref="CreateSetOf(AsnType[])" />
+        /// <seealso cref="CreateSequence(AsnType)" />
+        /// <seealso cref="CreateSequence(AsnType[])" />
+        /// <seealso cref="CreateSequenceOf(AsnType)" />
+        /// <seealso cref="CreateSequenceOf(AsnType[])" />
         internal static AsnType CreateSequenceOf(AsnType[] values)
         {
             // From the ASN.1 Mailing List
             if (IsEmpty(values))
-            { return new AsnType(0x30, EMPTY); }
+            {
+                return new AsnType(0x30, EMPTY);
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
             return new AsnType(0x30, Concatenate(values));
         }
 
         /// <summary>
-        /// <para>An ordered sequence of zero, one or more bits. Returns
-        /// the AsnType representing an ASN.1 encoded bit string.</para>
-        /// <para>If octets is null or length is 0, an empty (0 length)
-        /// bit string is returned.</para>
+        ///   <para> An ordered sequence of zero, one or more bits. Returns the AsnType representing an ASN.1 encoded bit string. </para>
+        ///   <para> If octets is null or length is 0, an empty (0 length) bit string is returned. </para>
         /// </summary>
-        /// <param name="octets">A MSB (big endian) byte[] representing the
-        /// bit string to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded bit string.</returns>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(AsnType[])"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="octets"> A MSB (big endian) byte[] representing the bit string to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded bit string. </returns>
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateBitString(AsnType[])" />
+        /// <seealso cref="CreateBitString(string)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(AsnType[])" />
+        /// <seealso cref="CreateOctetString(string)" />
         internal static AsnType CreateBitString(byte[] octets)
         {
             // BitString: Tag 0x03 (3, Universal, Primitive)
@@ -624,28 +416,21 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// <para>An ordered sequence of zero, one or more bits. Returns
-        /// the AsnType representing an ASN.1 encoded bit string.</para>
-        /// <para>unusedBits is applied to the end of the bit string,
-        /// not the start of the bit string. unusedBits must be less than 8
-        /// (the size of an octet). Refer to ITU X.680, Section 32.</para>
-        /// <para>If octets is null or length is 0, an empty (0 length)
-        /// bit string is returned.</para>
+        ///   <para> An ordered sequence of zero, one or more bits. Returns the AsnType representing an ASN.1 encoded bit string. </para>
+        ///   <para> unusedBits is applied to the end of the bit string, not the start of the bit string. unusedBits must be less than 8 (the size of an octet). Refer to ITU X.680, Section 32. </para>
+        ///   <para> If octets is null or length is 0, an empty (0 length) bit string is returned. </para>
         /// </summary>
-        /// <param name="octets">A MSB (big endian) byte[] representing the
-        /// bit string to be encoded.</param>
-        /// <param name="unusedBits">The number of unused trailing binary
-        /// digits in the bit string to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded bit string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(AsnType[])"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="octets"> A MSB (big endian) byte[] representing the bit string to be encoded. </param>
+        /// <param name="unusedBits"> The number of unused trailing binary digits in the bit string to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded bit string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateBitString(AsnType[])" />
+        /// <seealso cref="CreateBitString(string)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(AsnType[])" />
+        /// <seealso cref="CreateOctetString(string)" />
         internal static AsnType CreateBitString(byte[] octets, uint unusedBits)
         {
             if (IsEmpty(octets))
@@ -655,137 +440,149 @@ namespace Pdelvo.Minecraft.Network
             }
 
             if (!(unusedBits < 8))
-            { throw new ArgumentException("Unused bits must be less than 8."); }
+            {
+                throw new ArgumentException("Unused bits must be less than 8.");
+            }
 
-            byte[] b = Concatenate(new byte[] { (byte)unusedBits }, octets);
+            byte[] b = Concatenate(new[] {(byte) unusedBits}, octets);
             // BitString: Tag 0x03 (3, Universal, Primitive)
             return new AsnType(0x03, b);
         }
 
         /// <summary>
-        /// An ordered sequence of zero, one or more bits. Returns
-        /// the AsnType representing an ASN.1 encoded bit string.
-        /// If value is null, an empty (0 length) bit string is
-        /// returned.
+        ///   An ordered sequence of zero, one or more bits. Returns
+        ///   the AsnType representing an ASN.1 encoded bit string.
+        ///   If value is null, an empty (0 length) bit string is
+        ///   returned.
         /// </summary>
-        /// <param name="value">An AsnType object to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded bit string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(AsnType[])"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="value"> An AsnType object to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded bit string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(AsnType[])" />
+        /// <seealso cref="CreateBitString(string)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(AsnType[])" />
+        /// <seealso cref="CreateOctetString(string)" />
         internal static AsnType CreateBitString(AsnType value)
         {
             if (IsEmpty(value))
-            { return new AsnType(0x03, EMPTY); }
+            {
+                return new AsnType(0x03, EMPTY);
+            }
 
             // BitString: Tag 0x03 (3, Universal, Primitive)
-            return CreateBitString(value.GetBytes(), 0x00);
+            return CreateBitString(value.GetBytes (), 0x00);
         }
 
         /// <summary>
-        /// An ordered sequence of zero, one or more bits. Returns
-        /// the AsnType representing an ASN.1 encoded bit string.
-        /// If value is null, an empty (0 length) bit string is
-        /// returned.
+        ///   An ordered sequence of zero, one or more bits. Returns
+        ///   the AsnType representing an ASN.1 encoded bit string.
+        ///   If value is null, an empty (0 length) bit string is
+        ///   returned.
         /// </summary>
-        /// <param name="values">An AsnType object to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded bit string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="values"> An AsnType object to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded bit string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateBitString(string)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(AsnType[])" />
+        /// <seealso cref="CreateOctetString(string)" />
         internal static AsnType CreateBitString(AsnType[] values)
         {
             if (IsEmpty(values))
-            { return new AsnType(0x03, EMPTY); }
+            {
+                return new AsnType(0x03, EMPTY);
+            }
 
             // BitString: Tag 0x03 (3, Universal, Primitive)
             return CreateBitString(Concatenate(values), 0x00);
         }
 
         /// <summary>
-        /// <para>An ordered sequence of zero, one or more bits. Returns
-        /// the AsnType representing an ASN.1 encoded bit string.</para>
-        /// <para>If octets is null or length is 0, an empty (0 length)
-        /// bit string is returned.</para>
-        /// <para>If conversion fails, the bit string returned is a partial
-        /// bit string. The partial bit string ends at the octet before the
-        /// point of failure (it does not include the octet which could
-        /// not be parsed, or subsequent octets).</para>
+        ///   <para> An ordered sequence of zero, one or more bits. Returns the AsnType representing an ASN.1 encoded bit string. </para>
+        ///   <para> If octets is null or length is 0, an empty (0 length) bit string is returned. </para>
+        ///   <para> If conversion fails, the bit string returned is a partial bit string. The partial bit string ends at the octet before the point of failure (it does not include the octet which could not be parsed, or subsequent octets). </para>
         /// </summary>
-        /// <param name="value">A MSB (big endian) byte[] representing the
-        /// bit string to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded bit string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="value"> A MSB (big endian) byte[] representing the bit string to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded bit string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(AsnType[])" />
+        /// <seealso cref="CreateOctetString(String)" />
         internal static AsnType CreateBitString(String value)
         {
             if (IsEmpty(value))
-            { return CreateBitString(EMPTY); }
+            {
+                return CreateBitString(EMPTY);
+            }
 
             // Any unused bits?
             int lstrlen = value.Length;
-            int unusedBits = 8 - (lstrlen % 8);
-            if (8 == unusedBits) { unusedBits = 0; }
+            int unusedBits = 8 - (lstrlen%8);
+            if (8 == unusedBits)
+            {
+                unusedBits = 0;
+            }
 
             for (int i = 0; i < unusedBits; i++)
-            { value += "0"; }
+            {
+                value += "0";
+            }
 
             // Determine number of octets
-            int loctlen = (lstrlen + 7) / 8;
+            int loctlen = (lstrlen + 7)/8;
 
-            List<byte> octets = new List<byte>();
+            var octets = new List<byte> ();
             for (int i = 0; i < loctlen; i++)
             {
-                String s = value.Substring(i * 8, 8);
+                String s = value.Substring(i*8, 8);
                 byte b = 0x00;
 
                 try
-                { b = Convert.ToByte(s, 2); }
+                {
+                    b = Convert.ToByte(s, 2);
+                }
 
-                catch (FormatException /*e*/) { unusedBits = 0; break; }
-                catch (OverflowException /*e*/) { unusedBits = 0; break; }
+                catch (FormatException /*e*/)
+                {
+                    unusedBits = 0;
+                    break;
+                }
+                catch (OverflowException /*e*/)
+                {
+                    unusedBits = 0;
+                    break;
+                }
 
                 octets.Add(b);
             }
 
             // BitString: Tag 0x03 (3, Universal, Primitive)
-            return CreateBitString(octets.ToArray(), (uint)unusedBits);
+            return CreateBitString(octets.ToArray (), (uint) unusedBits);
         }
 
         /// <summary>
-        /// An ordered sequence of zero, one or more octets. Returns
-        /// the ASN.1 encoded octet string. If octets is null or length
-        /// is 0, an empty (0 length) octet string is returned.
+        ///   An ordered sequence of zero, one or more octets. Returns
+        ///   the ASN.1 encoded octet string. If octets is null or length
+        ///   is 0, an empty (0 length) octet string is returned.
         /// </summary>
-        /// <param name="value">A MSB (big endian) byte[] representing the
-        /// octet string to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded octet string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="value"> A MSB (big endian) byte[] representing the octet string to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded octet string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateBitString(String)" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(AsnType[])" />
+        /// <seealso cref="CreateOctetString(String)" />
         internal static AsnType CreateOctetString(byte[] value)
         {
             if (IsEmpty(value))
@@ -799,20 +596,19 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// An ordered sequence of zero, one or more octets. Returns
-        /// the byte[] representing an ASN.1 encoded octet string.
-        /// If octets is null or length is 0, an empty (0 length)
-        /// o ctet string is returned.
+        ///   An ordered sequence of zero, one or more octets. Returns
+        ///   the byte[] representing an ASN.1 encoded octet string.
+        ///   If octets is null or length is 0, an empty (0 length)
+        ///   o ctet string is returned.
         /// </summary>
-        /// <param name="value">An AsnType object to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded octet string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="value"> An AsnType object to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded octet string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateBitString(String)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(String)" />
         internal static AsnType CreateOctetString(AsnType value)
         {
             if (IsEmpty(value))
@@ -822,25 +618,24 @@ namespace Pdelvo.Minecraft.Network
             }
 
             // OctetString: Tag 0x04 (4, Universal, Primitive)
-            return new AsnType(0x04, value.GetBytes());
+            return new AsnType(0x04, value.GetBytes ());
         }
 
         /// <summary>
-        /// An ordered sequence of zero, one or more octets. Returns
-        /// the byte[] representing an ASN.1 encoded octet string.
-        /// If octets is null or length is 0, an empty (0 length)
-        /// o ctet string is returned.
+        ///   An ordered sequence of zero, one or more octets. Returns
+        ///   the byte[] representing an ASN.1 encoded octet string.
+        ///   If octets is null or length is 0, an empty (0 length)
+        ///   o ctet string is returned.
         /// </summary>
-        /// <param name="values">An AsnType object to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded octet string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <param name="values"> An AsnType object to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded octet string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateBitString(String)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(String)" />
         internal static AsnType CreateOctetString(AsnType[] values)
         {
             if (IsEmpty(values))
@@ -854,115 +649,112 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// <para>An ordered sequence of zero, one or more bits. Returns
-        /// the AsnType representing an ASN.1 encoded octet string.</para>
-        /// <para>If octets is null or length is 0, an empty (0 length)
-        /// octet string is returned.</para>
-        /// <para>If conversion fails, the bit string returned is a partial
-        /// bit string. The partial octet string ends at the octet before the
-        /// point of failure (it does not include the octet which could
-        /// not be parsed, or subsequent octets).</para>
+        ///   <para> An ordered sequence of zero, one or more bits. Returns the AsnType representing an ASN.1 encoded octet string. </para>
+        ///   <para> If octets is null or length is 0, an empty (0 length) octet string is returned. </para>
+        ///   <para> If conversion fails, the bit string returned is a partial bit string. The partial octet string ends at the octet before the point of failure (it does not include the octet which could not be parsed, or subsequent octets). </para>
         /// </summary>
-        /// <param name="value">A string representing the
-        /// octet string to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded octet string.</returns>
-        /// <seealso cref="CreateBitString(byte[])"/>
-        /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(String)"/>
-        /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(AsnType[])"/>
+        /// <param name="value"> A string representing the octet string to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded octet string. </returns>
+        /// <seealso cref="CreateBitString(byte[])" />
+        /// <seealso cref="CreateBitString(byte[], uint)" />
+        /// <seealso cref="CreateBitString(String)" />
+        /// <seealso cref="CreateBitString(AsnType)" />
+        /// <seealso cref="CreateOctetString(byte[])" />
+        /// <seealso cref="CreateOctetString(AsnType)" />
+        /// <seealso cref="CreateOctetString(AsnType[])" />
         internal static AsnType CreateOctetString(String value)
         {
             if (IsEmpty(value))
-            { return CreateOctetString(EMPTY); }
+            {
+                return CreateOctetString(EMPTY);
+            }
 
             // Determine number of octets
-            int len = (value.Length + 255) / 256;
+            int len = (value.Length + 255)/256;
 
-            List<byte> octets = new List<byte>();
+            var octets = new List<byte> ();
             for (int i = 0; i < len; i++)
             {
-                String s = value.Substring(i * 2, 2);
+                String s = value.Substring(i*2, 2);
                 byte b = 0x00;
 
                 try
-                { b = Convert.ToByte(s, 16); }
-                catch (FormatException /*e*/) { break; }
-                catch (OverflowException /*e*/) { break; }
+                {
+                    b = Convert.ToByte(s, 16);
+                }
+                catch (FormatException /*e*/)
+                {
+                    break;
+                }
+                catch (OverflowException /*e*/)
+                {
+                    break;
+                }
 
                 octets.Add(b);
             }
 
             // OctetString: Tag 0x04 (4, Universal, Primitive)
-            return CreateOctetString(octets.ToArray());
+            return CreateOctetString(octets.ToArray ());
         }
 
         /// <summary>
-        /// <para>Returns the AsnType representing a ASN.1 encoded
-        /// integer. The octets pass through this method are not modified.</para>
-        /// <para>If octets is null or zero length, the method returns an
-        /// AsnType equivalent to CreateInteger(byte[]{0})..</para>
+        ///   <para> Returns the AsnType representing a ASN.1 encoded integer. The octets pass through this method are not modified. </para>
+        ///   <para> If octets is null or zero length, the method returns an AsnType equivalent to CreateInteger(byte[]{0}).. </para>
         /// </summary>
-        /// <param name="value">A MSB (big endian) byte[] representing the
-        /// integer to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded integer.</returns>
+        /// <param name="value"> A MSB (big endian) byte[] representing the integer to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded integer. </returns>
         /// <example>
-        /// ASN.1 encoded 0:
-        /// <code>CreateInteger(null)</code>
-        /// <code>CreateInteger(new byte[]{0x00})</code>
-        /// <code>CreateInteger(new byte[]{0x00, 0x00})</code>
+        ///   ASN.1 encoded 0:
+        ///   <code>CreateInteger(null)</code>
+        ///   <code>CreateInteger(new byte[]{0x00})</code>
+        ///   <code>CreateInteger(new byte[]{0x00, 0x00})</code>
         /// </example>
         /// <example>
-        /// ASN.1 encoded 1:
-        /// <code>CreateInteger(new byte[]{0x01})</code>
+        ///   ASN.1 encoded 1:
+        ///   <code>CreateInteger(new byte[]{0x01})</code>
         /// </example>
-        /// <seealso cref="CreateIntegerPos"/>
-        /// <seealso cref="CreateIntegerNeg"/>
+        /// <seealso cref="CreateIntegerPos" />
+        /// <seealso cref="CreateIntegerNeg" />
         internal static AsnType CreateInteger(byte[] value)
         {
             // Is it better to add a '0', or silently
             //   drop the Integer? Dropping integers
             //   is probably not te best choice...
             if (IsEmpty(value))
-            { return CreateInteger(ZERO); }
+            {
+                return CreateInteger(ZERO);
+            }
 
             return new AsnType(0x02, value);
         }
 
         /// <summary>
-        /// <para>Returns the AsnType representing a positive ASN.1 encoded
-        /// integer. If the high bit of most significant byte is set,
-        /// the method prepends a 0x00 to octets before assigning the
-        /// value to ensure the resulting integer is interpreted as
-        /// positive in the application.</para>
-        /// <para>If octets is null or zero length, the method returns an
-        /// AsnType equivalent to CreateInteger(byte[]{0})..</para>
+        ///   <para> Returns the AsnType representing a positive ASN.1 encoded integer. If the high bit of most significant byte is set, the method prepends a 0x00 to octets before assigning the value to ensure the resulting integer is interpreted as positive in the application. </para>
+        ///   <para> If octets is null or zero length, the method returns an AsnType equivalent to CreateInteger(byte[]{0}).. </para>
         /// </summary>
-        /// <param name="value">A MSB (big endian) byte[] representing the
-        /// integer to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded positive integer.</returns>
+        /// <param name="value"> A MSB (big endian) byte[] representing the integer to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded positive integer. </returns>
         /// <example>
-        /// ASN.1 encoded 0:
-        /// <code>CreateIntegerPos(null)</code>
-        /// <code>CreateIntegerPos(new byte[]{0x00})</code>
-        /// <code>CreateIntegerPos(new byte[]{0x00, 0x00})</code>
+        ///   ASN.1 encoded 0:
+        ///   <code>CreateIntegerPos(null)</code>
+        ///   <code>CreateIntegerPos(new byte[]{0x00})</code>
+        ///   <code>CreateIntegerPos(new byte[]{0x00, 0x00})</code>
         /// </example>
         /// <example>
-        /// ASN.1 encoded 1:
-        /// <code>CreateInteger(new byte[]{0x01})</code>
+        ///   ASN.1 encoded 1:
+        ///   <code>CreateInteger(new byte[]{0x01})</code>
         /// </example>
-        /// <seealso cref="CreateInteger"/>
-        /// <seealso cref="CreateIntegerNeg"/>
+        /// <seealso cref="CreateInteger" />
+        /// <seealso cref="CreateIntegerNeg" />
         internal static AsnType CreateIntegerPos(byte[] value)
         {
             byte[] i = null, d = Duplicate(value);
 
-            if (IsEmpty(d)) { d = ZERO; }
+            if (IsEmpty(d))
+            {
+                d = ZERO;
+            }
 
             // Mediate the 2's compliment representation.
             // If the first byte has its high bit set, we will
@@ -983,59 +775,58 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// <para>Returns the negative ASN.1 encoded integer. If the high
-        /// bit of most significant byte is set, the integer is already
-        /// considered negative.</para>
-        /// <para>If the high bit of most significant byte
-        /// is <bold>not</bold> set, the integer will be 2's complimented
-        /// to form a negative integer.</para>
-        /// <para>If octets is null or zero length, the method returns an
-        /// AsnType equivalent to CreateInteger(byte[]{0})..</para>
+        ///   <para> Returns the negative ASN.1 encoded integer. If the high bit of most significant byte is set, the integer is already considered negative. </para>
+        ///   <para> If the high bit of most significant byte is <bold>not</bold> set, the integer will be 2's complimented to form a negative integer. </para>
+        ///   <para> If octets is null or zero length, the method returns an AsnType equivalent to CreateInteger(byte[]{0}).. </para>
         /// </summary>
-        /// <param name="value">A MSB (big endian) byte[] representing the
-        /// integer to be encoded.</param>
-        /// <returns>Returns the negative ASN.1 encoded integer.</returns>
+        /// <param name="value"> A MSB (big endian) byte[] representing the integer to be encoded. </param>
+        /// <returns> Returns the negative ASN.1 encoded integer. </returns>
         /// <example>
-        /// ASN.1 encoded 0:
-        /// <code>CreateIntegerNeg(null)</code>
-        /// <code>CreateIntegerNeg(new byte[]{0x00})</code>
-        /// <code>CreateIntegerNeg(new byte[]{0x00, 0x00})</code>
+        ///   ASN.1 encoded 0:
+        ///   <code>CreateIntegerNeg(null)</code>
+        ///   <code>CreateIntegerNeg(new byte[]{0x00})</code>
+        ///   <code>CreateIntegerNeg(new byte[]{0x00, 0x00})</code>
         /// </example>
         /// <example>
-        /// ASN.1 encoded -1 (2's compliment 0xFF):
-        /// <code>CreateIntegerNeg(new byte[]{0x01})</code>
+        ///   ASN.1 encoded -1 (2's compliment 0xFF):
+        ///   <code>CreateIntegerNeg(new byte[]{0x01})</code>
         /// </example>
         /// <example>
-        /// ASN.1 encoded -2 (2's compliment 0xFE):
-        /// <code>CreateIntegerNeg(new byte[]{0x02})</code>
+        ///   ASN.1 encoded -2 (2's compliment 0xFE):
+        ///   <code>CreateIntegerNeg(new byte[]{0x02})</code>
         /// </example>
         /// <example>
-        /// ASN.1 encoded -1:
-        /// <code>CreateIntegerNeg(new byte[]{0xFF})</code>
-        /// <code>CreateIntegerNeg(new byte[]{0xFF,0xFF})</code>
-        /// Note: already negative since the high bit is set.</example>
-        /// <example>
-        /// ASN.1 encoded -255 (2's compliment 0xFF, 0x01):
-        /// <code>CreateIntegerNeg(new byte[]{0x00,0xFF})</code>
+        ///   ASN.1 encoded -1:
+        ///   <code>CreateIntegerNeg(new byte[]{0xFF})</code>
+        ///   <code>CreateIntegerNeg(new byte[]{0xFF,0xFF})</code>
+        ///   Note: already negative since the high bit is set.
         /// </example>
         /// <example>
-        /// ASN.1 encoded -255 (2's compliment 0xFF, 0xFF, 0x01):
-        /// <code>CreateIntegerNeg(new byte[]{0x00,0x00,0xFF})</code>
+        ///   ASN.1 encoded -255 (2's compliment 0xFF, 0x01):
+        ///   <code>CreateIntegerNeg(new byte[]{0x00,0xFF})</code>
         /// </example>
-        /// <seealso cref="CreateInteger"/>
-        /// <seealso cref="CreateIntegerPos"/>
+        /// <example>
+        ///   ASN.1 encoded -255 (2's compliment 0xFF, 0xFF, 0x01):
+        ///   <code>CreateIntegerNeg(new byte[]{0x00,0x00,0xFF})</code>
+        /// </example>
+        /// <seealso cref="CreateInteger" />
+        /// <seealso cref="CreateIntegerPos" />
         internal static AsnType CreateIntegerNeg(byte[] value)
         {
             // Is it better to add a '0', or silently
             //   drop the Integer? Dropping integers
             //   is probably not te best choice...
             if (IsEmpty(value))
-            { return CreateInteger(ZERO); }
+            {
+                return CreateInteger(ZERO);
+            }
 
             // No Trimming
             // The byte[] may be that way for a reason
             if (IsZero(value))
-            { return CreateInteger(value); }
+            {
+                return CreateInteger(value);
+            }
 
             //
             // At this point, we know we have at least 1 octet
@@ -1043,8 +834,10 @@ namespace Pdelvo.Minecraft.Network
 
             // Is this integer already negative?
             if (value[0] >= 0x80)
-            // Pass through with no modifications
-            { return CreateInteger(value); }
+                // Pass through with no modifications
+            {
+                return CreateInteger(value);
+            }
 
             // No need to Duplicate - Compliment2s
             // performs the action
@@ -1054,25 +847,26 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// Returns the AsnType representing an ASN.1 encoded null.
+        ///   Returns the AsnType representing an ASN.1 encoded null.
         /// </summary>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded null.</returns>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded null. </returns>
         internal static AsnType CreateNull()
         {
-            return new AsnType(0x05, new byte[] { 0x00 });
+            return new AsnType(0x05, new byte[] {0x00});
         }
 
         /// <summary>
-        /// Removes leading 0x00 octets from the byte[] octets. This
-        /// method may return an empty byte array (0 length).
+        ///   Removes leading 0x00 octets from the byte[] octets. This
+        ///   method may return an empty byte array (0 length).
         /// </summary>
-        /// <param name="octets">An array of octets to trim.</param>
-        /// <returns>A byte[] with leading 0x00 octets removed.</returns>
+        /// <param name="octets"> An array of octets to trim. </param>
+        /// <returns> A byte[] with leading 0x00 octets removed. </returns>
         internal static byte[] TrimStart(byte[] octets)
         {
             if (IsEmpty(octets) || IsZero(octets))
-            { return new byte[] { }; }
+            {
+                return new byte[] {};
+            }
 
             byte[] d = Duplicate(octets);
 
@@ -1080,16 +874,21 @@ namespace Pdelvo.Minecraft.Network
             int pos = 0;
             foreach (byte b in d)
             {
-                if (0 != b) { break; }
+                if (0 != b)
+                {
+                    break;
+                }
                 pos++;
             }
 
             // Nothing to trim
             if (pos == d.Length)
-            { return octets; }
+            {
+                return octets;
+            }
 
             // Allocate trimmed array
-            byte[] t = new byte[d.Length - pos];
+            var t = new byte[d.Length - pos];
 
             // Copy
             Array.Copy(d, pos, t, 0, t.Length);
@@ -1098,15 +897,17 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// Removes trailing 0x00 octets from the byte[] octets. This
-        /// method may return an empty byte array (0 length).
+        ///   Removes trailing 0x00 octets from the byte[] octets. This
+        ///   method may return an empty byte array (0 length).
         /// </summary>
-        /// <param name="octets">An array of octets to trim.</param>
-        /// <returns>A byte[] with trailing 0x00 octets removed.</returns>
+        /// <param name="octets"> An array of octets to trim. </param>
+        /// <returns> A byte[] with trailing 0x00 octets removed. </returns>
         internal static byte[] TrimEnd(byte[] octets)
         {
             if (IsEmpty(octets) || IsZero(octets))
-            { return EMPTY; }
+            {
+                return EMPTY;
+            }
 
             byte[] d = Duplicate(octets);
 
@@ -1120,27 +921,26 @@ namespace Pdelvo.Minecraft.Network
         }
 
         /// <summary>
-        /// Returns the AsnType representing an ASN.1 encoded OID.
-        /// If conversion fails, the result is a partial conversion
-        /// up to the point of failure. If the oid string is null or
-        /// not well formed, an empty byte[] is returned.
+        ///   Returns the AsnType representing an ASN.1 encoded OID.
+        ///   If conversion fails, the result is a partial conversion
+        ///   up to the point of failure. If the oid string is null or
+        ///   not well formed, an empty byte[] is returned.
         /// </summary>
-        /// <param name="value">The string representing the object
-        /// identifier to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded object identifier.</returns>
-        /// <example>The following assigns the encoded AsnType
-        /// for a RSA key to oid:
-        /// <code>AsnType oid = CreateOid("1.2.840.113549.1.1.1")</code>
+        /// <param name="value"> The string representing the object identifier to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded object identifier. </returns>
+        /// <example>
+        ///   The following assigns the encoded AsnType
+        ///   for a RSA key to oid:
+        ///   <code>AsnType oid = CreateOid("1.2.840.113549.1.1.1")</code>
         /// </example>
-        /// <seealso cref="CreateOid(byte[])"/>
+        /// <seealso cref="CreateOid(byte[])" />
         internal static AsnType CreateOid(String value)
         {
             // Punt?
             if (IsEmpty(value))
                 return null;
 
-            String[] tokens = value.Split(new Char[] { ' ', '.' });
+            String[] tokens = value.Split(new[] {' ', '.'});
 
             // Punt?
             if (IsEmpty(tokens))
@@ -1150,16 +950,28 @@ namespace Pdelvo.Minecraft.Network
             UInt64 a = 0;
 
             // One or more strings are available
-            List<UInt64> arcs = new List<UInt64>();
+            var arcs = new List<UInt64> ();
 
             foreach (String t in tokens)
             {
                 // No empty or ill-formed strings...
-                if (t.Length == 0) { break; }
+                if (t.Length == 0)
+                {
+                    break;
+                }
 
-                try { a = Convert.ToUInt64(t, CultureInfo.InvariantCulture); }
-                catch (FormatException /*e*/) { break; }
-                catch (OverflowException /*e*/) { break; }
+                try
+                {
+                    a = Convert.ToUInt64(t, CultureInfo.InvariantCulture);
+                }
+                catch (FormatException /*e*/)
+                {
+                    break;
+                }
+                catch (OverflowException /*e*/)
+                {
+                    break;
+                }
 
                 arcs.Add(a);
             }
@@ -1169,19 +981,25 @@ namespace Pdelvo.Minecraft.Network
                 return null;
 
             // Octets to be returned to caller
-            List<byte> octets = new List<byte>();
+            var octets = new List<byte> ();
 
             // Guard the case of a small list
             // The list has at least 1 item...    
-            if (arcs.Count >= 1) { a = arcs[0] * 40; }
-            if (arcs.Count >= 2) { a += arcs[1]; }
-            octets.Add((byte)(a));
+            if (arcs.Count >= 1)
+            {
+                a = arcs[0]*40;
+            }
+            if (arcs.Count >= 2)
+            {
+                a += arcs[1];
+            }
+            octets.Add((byte) (a));
 
             // Add remaining arcs (subidentifiers)
             for (int i = 2; i < arcs.Count; i++)
             {
                 // Scratch list builder for this arc
-                List<byte> temp = new List<byte>();
+                var temp = new List<byte> ();
 
                 // The current arc (subidentifier)
                 UInt64 arc = arcs[i];
@@ -1193,51 +1011,54 @@ namespace Pdelvo.Minecraft.Network
                     // Each entry is formed from the low 7 bits (0x7F).
                     // Set high bit of all entries (0x80) per X.680. We
                     // will unset the high bit of the final byte later.
-                    temp.Add((byte)(0x80 | (arc & 0x7F)));
+                    temp.Add((byte) (0x80 | (arc & 0x7F)));
                     arc >>= 7;
                 } while (0 != arc);
 
                 // Grab resulting array. Because of the do/while,
                 // there is at least one value in the array.
-                byte[] t = temp.ToArray();
+                byte[] t = temp.ToArray ();
 
                 // Unset high bit of byte t[0]
                 // t[0] will be LSB after the array is reversed.
-                t[0] = (byte)(0x7F & t[0]);
+                t[0] = (byte) (0x7F & t[0]);
 
                 // MSB first...
                 Array.Reverse(t);
 
                 // Add to the resulting array
                 foreach (byte b in t)
-                { octets.Add(b); }
+                {
+                    octets.Add(b);
+                }
             }
 
-            return CreateOid(octets.ToArray());
+            return CreateOid(octets.ToArray ());
         }
 
         /// <summary>
-        /// Returns the AsnType representing an ASN.1 encoded OID.
-        /// If conversion fails, the result is a partial conversion
-        /// (up to the point of failure). If octets is null, an
-        /// empty byte[] is returned.
+        ///   Returns the AsnType representing an ASN.1 encoded OID.
+        ///   If conversion fails, the result is a partial conversion
+        ///   (up to the point of failure). If octets is null, an
+        ///   empty byte[] is returned.
         /// </summary>
-        /// <param name="value">The packed byte[] representing the object
-        /// identifier to be encoded.</param>
-        /// <returns>Returns the AsnType representing an ASN.1
-        /// encoded object identifier.</returns>
-        /// <example>The following assigns the encoded AsnType for a RSA
-        /// key to oid:
-        /// <code>// Packed 1.2.840.113549.1.1.1
-        /// byte[] rsa = new byte[] { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 };
-        /// AsnType = CreateOid(rsa)</code>
+        /// <param name="value"> The packed byte[] representing the object identifier to be encoded. </param>
+        /// <returns> Returns the AsnType representing an ASN.1 encoded object identifier. </returns>
+        /// <example>
+        ///   The following assigns the encoded AsnType for a RSA
+        ///   key to oid:
+        ///   <code>// Packed 1.2.840.113549.1.1.1
+        ///     byte[] rsa = new byte[] { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 };
+        ///     AsnType = CreateOid(rsa)</code>
         /// </example>
-        /// <seealso cref="CreateOid(String)"/>
+        /// <seealso cref="CreateOid(String)" />
         internal static AsnType CreateOid(byte[] value)
         {
             // Punt...
             if (IsEmpty(value))
-            { return null; }
+            {
+                return null;
+            }
 
             // OID: Tag 0x06 (6, Universal, Primitive)
             return new AsnType(0x06, value);
@@ -1246,7 +1067,9 @@ namespace Pdelvo.Minecraft.Network
         private static byte[] Compliment1s(byte[] value)
         {
             if (IsEmpty(value))
-            { return EMPTY; }
+            {
+                return EMPTY;
+            }
 
             // Make a copy of octet array
             byte[] c = Duplicate(value);
@@ -1254,7 +1077,7 @@ namespace Pdelvo.Minecraft.Network
             for (int i = c.Length - 1; i >= 0; i--)
             {
                 // Compliment
-                c[i] = (byte)~c[i];
+                c[i] = (byte) ~c[i];
             }
 
             return c;
@@ -1263,11 +1086,15 @@ namespace Pdelvo.Minecraft.Network
         private static byte[] Compliment2s(byte[] value)
         {
             if (IsEmpty(value))
-            { return EMPTY; }
+            {
+                return EMPTY;
+            }
 
             // 2s Compliment of 0 is 0
             if (IsZero(value))
-            { return Duplicate(value); }
+            {
+                return Duplicate(value);
+            }
 
             // Make a copy of octet array
             byte[] d = Duplicate(value);
@@ -1276,19 +1103,23 @@ namespace Pdelvo.Minecraft.Network
             for (int i = d.Length - 1; i >= 0; i--)
             {
                 // Compliment
-                d[i] = (byte)~d[i];
+                d[i] = (byte) ~d[i];
 
                 // Add
                 int j = d[i] + carry;
 
                 // Write Back
-                d[i] = (byte)(j & 0xFF);
+                d[i] = (byte) (j & 0xFF);
 
                 // Determine Next Carry
                 if (0x100 == (j & 0x100))
-                { carry = 1; }
+                {
+                    carry = 1;
+                }
                 else
-                { carry = 0; }
+                {
+                    carry = 0;
+                }
             }
 
             // Carry Array (we may need to carry out of 'd'
@@ -1298,7 +1129,7 @@ namespace Pdelvo.Minecraft.Network
                 c = new byte[d.Length + 1];
 
                 // Sign Extend....
-                c[0] = (byte)0xFF;
+                c[0] = 0xFF;
 
                 Array.Copy(d, 0, c, 1, d.Length);
             }
@@ -1314,23 +1145,25 @@ namespace Pdelvo.Minecraft.Network
         {
             // Nothing in, nothing out
             if (IsEmpty(values))
-                return new byte[] { };
+                return new byte[] {};
 
             int length = 0;
             foreach (AsnType t in values)
             {
                 if (null != t)
-                { length += t.GetBytes().Length; }
+                {
+                    length += t.GetBytes ().Length;
+                }
             }
 
-            byte[] cated = new byte[length];
+            var cated = new byte[length];
 
             int current = 0;
             foreach (AsnType t in values)
             {
                 if (null != t)
                 {
-                    byte[] b = t.GetBytes();
+                    byte[] b = t.GetBytes ();
 
                     Array.Copy(b, 0, cated, current, b.Length);
                     current += b.Length;
@@ -1342,23 +1175,25 @@ namespace Pdelvo.Minecraft.Network
 
         private static byte[] Concatenate(byte[] first, byte[] second)
         {
-            return Concatenate(new byte[][] { first, second });
+            return Concatenate(new[] {first, second});
         }
 
         private static byte[] Concatenate(byte[][] values)
         {
             // Nothing in, nothing out
             if (IsEmpty(values))
-                return new byte[] { };
+                return new byte[] {};
 
             int length = 0;
             foreach (byte[] b in values)
             {
                 if (null != b)
-                { length += b.Length; }
+                {
+                    length += b.Length;
+                }
             }
 
-            byte[] cated = new byte[length];
+            var cated = new byte[length];
 
             int current = 0;
             foreach (byte[] b in values)
@@ -1376,9 +1211,11 @@ namespace Pdelvo.Minecraft.Network
         private static byte[] Duplicate(byte[] b)
         {
             if (IsEmpty(b))
-            { return EMPTY; }
+            {
+                return EMPTY;
+            }
 
-            byte[] d = new byte[b.Length];
+            var d = new byte[b.Length];
             Array.Copy(b, d, b.Length);
 
             return d;
@@ -1387,13 +1224,18 @@ namespace Pdelvo.Minecraft.Network
         private static bool IsZero(byte[] octets)
         {
             if (IsEmpty(octets))
-            { return false; }
+            {
+                return false;
+            }
 
             bool allZeros = true;
             for (int i = 0; i < octets.Length; i++)
             {
                 if (0 != octets[i])
-                { allZeros = false; break; }
+                {
+                    allZeros = false;
+                    break;
+                }
             }
             return allZeros;
         }
@@ -1401,7 +1243,9 @@ namespace Pdelvo.Minecraft.Network
         private static bool IsEmpty(byte[] octets)
         {
             if (null == octets || 0 == octets.Length)
-            { return true; }
+            {
+                return true;
+            }
 
             return false;
         }
@@ -1409,7 +1253,9 @@ namespace Pdelvo.Minecraft.Network
         private static bool IsEmpty(String s)
         {
             if (null == s || 0 == s.Length)
-            { return true; }
+            {
+                return true;
+            }
 
             return false;
         }
@@ -1425,7 +1271,9 @@ namespace Pdelvo.Minecraft.Network
         private static bool IsEmpty(AsnType value)
         {
             if (null == value)
-            { return true; }
+            {
+                return true;
+            }
 
             return false;
         }
@@ -1445,23 +1293,216 @@ namespace Pdelvo.Minecraft.Network
 
             return false;
         }
+
+        #region Nested type: AsnType
+
+        internal class AsnType
+        {
+            // Constructors
+            // No default - must specify tag and data
+
+            private readonly byte[] m_tag;
+            private byte[] m_length;
+            private byte[] m_octets;
+            private bool m_raw;
+
+            public AsnType(byte tag, byte octet)
+            {
+                m_raw = false;
+                m_tag = new[] {tag};
+                m_octets = new[] {octet};
+            }
+
+            public AsnType(byte tag, byte[] octets)
+            {
+                m_raw = false;
+                m_tag = new[] {tag};
+                m_octets = octets;
+            }
+
+            public AsnType(byte tag, byte[] length, byte[] octets)
+            {
+                m_raw = true;
+                m_tag = new[] {tag};
+                m_length = length;
+                m_octets = octets;
+            }
+
+            private bool Raw
+            {
+                get { return m_raw; }
+                set { m_raw = value; }
+            }
+
+            // Setters and Getters
+
+            public byte[] Tag
+            {
+                get
+                {
+                    if (null == m_tag)
+                        return EMPTY;
+                    return m_tag;
+                }
+                // set { m_tag = value; }
+            }
+
+            public byte[] Length
+            {
+                get
+                {
+                    if (null == m_length)
+                        return EMPTY;
+                    return m_length;
+                }
+                // set { m_length = value; }
+            }
+
+            public byte[] Octets
+            {
+                get
+                {
+                    if (null == m_octets)
+                    {
+                        return EMPTY;
+                    }
+                    return m_octets;
+                }
+                set { m_octets = value; }
+            }
+
+            // Methods
+            internal byte[] GetBytes()
+            {
+                // Created raw by user
+                // return the bytes....
+                if (m_raw)
+                {
+                    return Concatenate(
+                        new[] {m_tag, m_length, m_octets}
+                        );
+                }
+
+                SetLength ();
+
+                // Special case
+                // Null does not use length
+                if (0x05 == m_tag[0])
+                {
+                    return Concatenate(
+                        new[] {m_tag, m_octets}
+                        );
+                }
+
+                return Concatenate(
+                    new[] {m_tag, m_length, m_octets}
+                    );
+            }
+
+            private void SetLength()
+            {
+                if (null == m_octets)
+                {
+                    m_length = ZERO;
+                    return;
+                }
+
+                // Special case
+                // Null does not use length
+                if (0x05 == m_tag[0])
+                {
+                    m_length = EMPTY;
+                    return;
+                }
+
+                byte[] length = null;
+
+                // Length: 0 <= l < 0x80
+                if (m_octets.Length < 0x80)
+                {
+                    length = new byte[1];
+                    length[0] = (byte) m_octets.Length;
+                }
+                    // 0x80 < length <= 0xFF
+                else if (m_octets.Length <= 0xFF)
+                {
+                    length = new byte[2];
+                    length[0] = 0x81;
+                    length[1] = (byte) ((m_octets.Length & 0xFF));
+                }
+
+                    //
+                    // We should almost never see these...
+                    //
+
+                    // 0xFF < length <= 0xFFFF
+                else if (m_octets.Length <= 0xFFFF)
+                {
+                    length = new byte[3];
+                    length[0] = 0x82;
+                    length[1] = (byte) ((m_octets.Length & 0xFF00) >> 8);
+                    length[2] = (byte) ((m_octets.Length & 0xFF));
+                }
+
+                    // 0xFFFF < length <= 0xFFFFFF
+                else if (m_octets.Length <= 0xFFFFFF)
+                {
+                    length = new byte[4];
+                    length[0] = 0x83;
+                    length[1] = (byte) ((m_octets.Length & 0xFF0000) >> 16);
+                    length[2] = (byte) ((m_octets.Length & 0xFF00) >> 8);
+                    length[3] = (byte) ((m_octets.Length & 0xFF));
+                }
+                    // 0xFFFFFF < length <= 0xFFFFFFFF
+                else
+                {
+                    length = new byte[5];
+                    length[0] = 0x84;
+                    length[1] = (byte) ((m_octets.Length & 0xFF000000) >> 24);
+                    length[2] = (byte) ((m_octets.Length & 0xFF0000) >> 16);
+                    length[3] = (byte) ((m_octets.Length & 0xFF00) >> 8);
+                    length[4] = (byte) ((m_octets.Length & 0xFF));
+                }
+
+                m_length = length;
+            }
+
+            private byte[] Concatenate(byte[][] values)
+            {
+                // Nothing in, nothing out
+                if (IsEmpty(values))
+                    return new byte[] {};
+
+                int length = 0;
+                foreach (byte[] b in values)
+                {
+                    if (null != b) length += b.Length;
+                }
+
+                var cated = new byte[length];
+
+                int current = 0;
+                foreach (byte[] b in values)
+                {
+                    if (null != b)
+                    {
+                        Array.Copy(b, 0, cated, current, b.Length);
+                        current += b.Length;
+                    }
+                }
+
+                return cated;
+            }
+        };
+
+        #endregion
     }
 
 
     public class AsnMessage
     {
-        private byte[] m_octets;
-        private String m_format;
-
-        internal int Length
-        {
-            get
-            {
-                if (null == m_octets) { return 0; }
-                return m_octets.Length;
-            }
-            // set { m_length = value; }
-        }
+        private readonly String m_format;
+        private readonly byte[] m_octets;
 
         internal AsnMessage(byte[] octets, String format)
         {
@@ -1469,36 +1510,53 @@ namespace Pdelvo.Minecraft.Network
             m_format = format;
         }
 
+        internal int Length
+        {
+            get
+            {
+                if (null == m_octets)
+                {
+                    return 0;
+                }
+                return m_octets.Length;
+            }
+            // set { m_length = value; }
+        }
+
         public byte[] GetBytes()
         {
             if (null == m_octets)
-            { return new byte[] { }; }
+            {
+                return new byte[] {};
+            }
 
             return m_octets;
         }
+
         internal String GetFormat()
-        { return m_format; }
+        {
+            return m_format;
+        }
     }
 
-    class AsnKeyParser
+    internal class AsnKeyParser
     {
-        private AsnParser parser;
+        private readonly AsnParser parser;
 
         internal AsnKeyParser(String pathname)
         {
-            using (BinaryReader reader = new BinaryReader(
+            using (var reader = new BinaryReader(
                 new FileStream(pathname, FileMode.Open, FileAccess.Read)))
             {
-                FileInfo info = new FileInfo(pathname);
+                var info = new FileInfo(pathname);
 
-                parser = new AsnParser(reader.ReadBytes((int)info.Length));
+                parser = new AsnParser(reader.ReadBytes((int) info.Length));
             }
         }
 
         internal AsnKeyParser(byte[] Key)
         {
             parser = new AsnParser(Key);
-
         }
 
         internal static byte[] TrimLeadingZero(byte[] values)
@@ -1521,12 +1579,16 @@ namespace Pdelvo.Minecraft.Network
         internal static bool EqualOid(byte[] first, byte[] second)
         {
             if (first.Length != second.Length)
-            { return false; }
+            {
+                return false;
+            }
 
             for (int i = 0; i < first.Length; i++)
             {
                 if (first[i] != second[i])
-                { return false; }
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -1534,7 +1596,7 @@ namespace Pdelvo.Minecraft.Network
 
         internal RSAParameters ParseRSAPublicKey()
         {
-            RSAParameters parameters = new RSAParameters();
+            var parameters = new RSAParameters ();
 
             // Current value
             byte[] value = null;
@@ -1543,373 +1605,388 @@ namespace Pdelvo.Minecraft.Network
             int length = 0;
 
             // Checkpoint
-            int position = parser.CurrentPosition();
+            int position = parser.CurrentPosition ();
 
             // Ignore Sequence - PublicKeyInfo
-            length = parser.NextSequence();
-            if (length != parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length != parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
+                var sb = new StringBuilder("Incorrect Sequence Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture),
-                  parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - AlgorithmIdentifier
-            length = parser.NextSequence();
-            if (length > parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture),
-                  parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
             // Grab the OID
-            value = parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
+            value = parser.NextOID ();
+            byte[] oid = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01};
             if (!EqualOid(value, oid))
-            { throw new BerDecodeException("Expected OID 1.2.840.113549.1.1.1", position); }
+            {
+                throw new BerDecodeException("Expected OID 1.2.840.113549.1.1.1", position);
+            }
 
             // Optional Parameters
-            if (parser.IsNextNull())
+            if (parser.IsNextNull ())
             {
-                parser.NextNull();
+                parser.NextNull ();
                 // Also OK: value = parser.Next();
             }
             else
             {
                 // Gracefully skip the optional data
-                value = parser.Next();
+                value = parser.Next ();
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore BitString - PublicKey
-            length = parser.NextBitString();
-            if (length > parser.RemainingBytes())
+            length = parser.NextBitString ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect PublicKey Size. ");
+                var sb = new StringBuilder("Incorrect PublicKey Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture),
-                  (parser.RemainingBytes()).ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                (parser.RemainingBytes ()).ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - RSAPublicKey
-            length = parser.NextSequence();
-            if (length < parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length < parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
+                var sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture),
-                  parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
-            parameters.Modulus = TrimLeadingZero(parser.NextInteger());
-            parameters.Exponent = TrimLeadingZero(parser.NextInteger());
+            parameters.Modulus = TrimLeadingZero(parser.NextInteger ());
+            parameters.Exponent = TrimLeadingZero(parser.NextInteger ());
 
-            Debug.Assert(0 == parser.RemainingBytes());
+            Debug.Assert(0 == parser.RemainingBytes ());
 
             return parameters;
         }
 
         internal RSAParameters ParseRSAPrivateKey()
         {
-            RSAParameters parameters = new RSAParameters();
+            var parameters = new RSAParameters ();
 
             // Current value
             byte[] value = null;
 
             // Checkpoint
-            int position = parser.CurrentPosition();
+            int position = parser.CurrentPosition ();
 
             // Sanity Check
             int length = 0;
 
             // Ignore Sequence - PrivateKeyInfo
-            length = parser.NextSequence();
-            if (length != parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length != parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
+                var sb = new StringBuilder("Incorrect Sequence Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture), parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
             // Version
-            value = parser.NextInteger();
+            value = parser.NextInteger ();
             if (0x00 != value[0])
             {
-                StringBuilder sb = new StringBuilder("Incorrect PrivateKeyInfo Version. ");
-                BigInteger v = new BigInteger(value);
-                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString());
-                throw new BerDecodeException(sb.ToString(), position);
+                var sb = new StringBuilder("Incorrect PrivateKeyInfo Version. ");
+                var v = new BigInteger(value);
+                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString ());
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - AlgorithmIdentifier
-            length = parser.NextSequence();
-            if (length > parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture),
-                  parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Grab the OID
-            value = parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
+            value = parser.NextOID ();
+            byte[] oid = {0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01};
             if (!EqualOid(value, oid))
-            { throw new BerDecodeException("Expected OID 1.2.840.113549.1.1.1", position); }
+            {
+                throw new BerDecodeException("Expected OID 1.2.840.113549.1.1.1", position);
+            }
 
             // Optional Parameters
-            if (parser.IsNextNull())
+            if (parser.IsNextNull ())
             {
-                parser.NextNull();
+                parser.NextNull ();
                 // Also OK: value = parser.Next();
             }
             else
             {
                 // Gracefully skip the optional data
-                value = parser.Next();
+                value = parser.Next ();
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore OctetString - PrivateKey
-            length = parser.NextOctetString();
-            if (length > parser.RemainingBytes())
+            length = parser.NextOctetString ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect PrivateKey Size. ");
+                var sb = new StringBuilder("Incorrect PrivateKey Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture),
-                  parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - RSAPrivateKey
-            length = parser.NextSequence();
-            if (length < parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length < parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Size. ");
+                var sb = new StringBuilder("Incorrect RSAPrivateKey Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture),
-                  parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
             // Version
-            value = parser.NextInteger();
+            value = parser.NextInteger ();
             if (0x00 != value[0])
             {
-                StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Version. ");
-                BigInteger v = new BigInteger(value);
-                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString());
-                throw new BerDecodeException(sb.ToString(), position);
+                var sb = new StringBuilder("Incorrect RSAPrivateKey Version. ");
+                var v = new BigInteger(value);
+                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString ());
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
-            parameters.Modulus = TrimLeadingZero(parser.NextInteger());
-            parameters.Exponent = TrimLeadingZero(parser.NextInteger());
-            parameters.D = TrimLeadingZero(parser.NextInteger());
-            parameters.P = TrimLeadingZero(parser.NextInteger());
-            parameters.Q = TrimLeadingZero(parser.NextInteger());
-            parameters.DP = TrimLeadingZero(parser.NextInteger());
-            parameters.DQ = TrimLeadingZero(parser.NextInteger());
-            parameters.InverseQ = TrimLeadingZero(parser.NextInteger());
+            parameters.Modulus = TrimLeadingZero(parser.NextInteger ());
+            parameters.Exponent = TrimLeadingZero(parser.NextInteger ());
+            parameters.D = TrimLeadingZero(parser.NextInteger ());
+            parameters.P = TrimLeadingZero(parser.NextInteger ());
+            parameters.Q = TrimLeadingZero(parser.NextInteger ());
+            parameters.DP = TrimLeadingZero(parser.NextInteger ());
+            parameters.DQ = TrimLeadingZero(parser.NextInteger ());
+            parameters.InverseQ = TrimLeadingZero(parser.NextInteger ());
 
-            Debug.Assert(0 == parser.RemainingBytes());
+            Debug.Assert(0 == parser.RemainingBytes ());
 
             return parameters;
         }
 
         internal DSAParameters ParseDSAPublicKey()
         {
-            DSAParameters parameters = new DSAParameters();
+            var parameters = new DSAParameters ();
 
             // Current value
             byte[] value = null;
 
             // Current Position
-            int position = parser.CurrentPosition();
+            int position = parser.CurrentPosition ();
             // Sanity Checks
             int length = 0;
 
             // Ignore Sequence - PublicKeyInfo
-            length = parser.NextSequence();
-            if (length != parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length != parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
+                var sb = new StringBuilder("Incorrect Sequence Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture), parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - AlgorithmIdentifier
-            length = parser.NextSequence();
-            if (length > parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture), parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Grab the OID
-            value = parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0xce, 0x38, 0x04, 0x01 };
+            value = parser.NextOID ();
+            byte[] oid = {0x2a, 0x86, 0x48, 0xce, 0x38, 0x04, 0x01};
             if (!EqualOid(value, oid))
-            { throw new BerDecodeException("Expected OID 1.2.840.10040.4.1", position); }
+            {
+                throw new BerDecodeException("Expected OID 1.2.840.10040.4.1", position);
+            }
 
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - DSS-Params
-            length = parser.NextSequence();
-            if (length > parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
+                var sb = new StringBuilder("Incorrect DSS-Params Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture), parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Next three are curve parameters
-            parameters.P = TrimLeadingZero(parser.NextInteger());
-            parameters.Q = TrimLeadingZero(parser.NextInteger());
-            parameters.G = TrimLeadingZero(parser.NextInteger());
+            parameters.P = TrimLeadingZero(parser.NextInteger ());
+            parameters.Q = TrimLeadingZero(parser.NextInteger ());
+            parameters.G = TrimLeadingZero(parser.NextInteger ());
 
             // Ignore BitString - PrivateKey
-            parser.NextBitString();
+            parser.NextBitString ();
 
             // Public Key
-            parameters.Y = TrimLeadingZero(parser.NextInteger());
+            parameters.Y = TrimLeadingZero(parser.NextInteger ());
 
-            Debug.Assert(0 == parser.RemainingBytes());
+            Debug.Assert(0 == parser.RemainingBytes ());
 
             return parameters;
         }
 
         internal DSAParameters ParseDSAPrivateKey()
         {
-            DSAParameters parameters = new DSAParameters();
+            var parameters = new DSAParameters ();
 
             // Current value
             byte[] value = null;
 
             // Current Position
-            int position = parser.CurrentPosition();
+            int position = parser.CurrentPosition ();
             // Sanity Checks
             int length = 0;
 
             // Ignore Sequence - PrivateKeyInfo
-            length = parser.NextSequence();
-            if (length != parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length != parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
+                var sb = new StringBuilder("Incorrect Sequence Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture), parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
             // Version
-            value = parser.NextInteger();
+            value = parser.NextInteger ();
             if (0x00 != value[0])
             {
                 throw new BerDecodeException("Incorrect PrivateKeyInfo Version", position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - AlgorithmIdentifier
-            length = parser.NextSequence();
-            if (length > parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture), parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
             // Grab the OID
-            value = parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0xce, 0x38, 0x04, 0x01 };
+            value = parser.NextOID ();
+            byte[] oid = {0x2a, 0x86, 0x48, 0xce, 0x38, 0x04, 0x01};
             if (!EqualOid(value, oid))
-            { throw new BerDecodeException("Expected OID 1.2.840.10040.4.1", position); }
+            {
+                throw new BerDecodeException("Expected OID 1.2.840.10040.4.1", position);
+            }
 
             // Checkpoint
-            position = parser.CurrentPosition();
+            position = parser.CurrentPosition ();
 
             // Ignore Sequence - DSS-Params
-            length = parser.NextSequence();
-            if (length > parser.RemainingBytes())
+            length = parser.NextSequence ();
+            if (length > parser.RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
+                var sb = new StringBuilder("Incorrect DSS-Params Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  length.ToString(CultureInfo.InvariantCulture), parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                length.ToString(CultureInfo.InvariantCulture),
+                                parser.RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             // Next three are curve parameters
-            parameters.P = TrimLeadingZero(parser.NextInteger());
-            parameters.Q = TrimLeadingZero(parser.NextInteger());
-            parameters.G = TrimLeadingZero(parser.NextInteger());
+            parameters.P = TrimLeadingZero(parser.NextInteger ());
+            parameters.Q = TrimLeadingZero(parser.NextInteger ());
+            parameters.G = TrimLeadingZero(parser.NextInteger ());
 
             // Ignore OctetString - PrivateKey
-            parser.NextOctetString();
+            parser.NextOctetString ();
 
             // Private Key
-            parameters.X = TrimLeadingZero(parser.NextInteger());
+            parameters.X = TrimLeadingZero(parser.NextInteger ());
 
-            Debug.Assert(0 == parser.RemainingBytes());
+            Debug.Assert(0 == parser.RemainingBytes ());
 
             return parameters;
         }
     }
 
-    class AsnParser
+    internal class AsnParser
     {
-        private List<byte> octets;
-        private int initialCount;
+        private readonly int initialCount;
+        private readonly List<byte> octets;
 
         internal AsnParser(byte[] values)
         {
@@ -1934,21 +2011,24 @@ namespace Pdelvo.Minecraft.Network
             int length = 0;
 
             // Checkpoint
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
 
-                if (b == (b & 0x7f)) { return b; }
+                if (b == (b & 0x7f))
+                {
+                    return b;
+                }
                 int i = b & 0x7f;
 
                 if (i > 4)
                 {
-                    StringBuilder sb = new StringBuilder("Invalid Length Encoding. ");
+                    var sb = new StringBuilder("Invalid Length Encoding. ");
                     sb.AppendFormat("Length uses {0} octets",
-                      i.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    i.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
                 while (0 != i--)
@@ -1956,51 +2036,55 @@ namespace Pdelvo.Minecraft.Network
                     // shift left
                     length <<= 8;
 
-                    length |= GetNextOctet();
+                    length |= GetNextOctet ();
                 }
             }
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
 
             return length;
         }
 
         internal byte[] Next()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
 
-                int length = GetLength();
-                if (length > RemainingBytes())
+                int length = GetLength ();
+                if (length > RemainingBytes ())
                 {
-                    StringBuilder sb = new StringBuilder("Incorrect Size. ");
+                    var sb = new StringBuilder("Incorrect Size. ");
                     sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                      length.ToString(CultureInfo.InvariantCulture),
-                      RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    length.ToString(CultureInfo.InvariantCulture),
+                                    RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
                 return GetOctets(length);
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
         }
 
         internal byte GetNextOctet()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
-            if (0 == RemainingBytes())
+            if (0 == RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect Size. ");
+                var sb = new StringBuilder("Incorrect Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  1.ToString(CultureInfo.InvariantCulture),
-                  RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                1.ToString(CultureInfo.InvariantCulture),
+                                RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
             byte b = GetOctets(1)[0];
@@ -2010,18 +2094,18 @@ namespace Pdelvo.Minecraft.Network
 
         internal byte[] GetOctets(int octetCount)
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
-            if (octetCount > RemainingBytes())
+            if (octetCount > RemainingBytes ())
             {
-                StringBuilder sb = new StringBuilder("Incorrect Size. ");
+                var sb = new StringBuilder("Incorrect Size. ");
                 sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                  octetCount.ToString(CultureInfo.InvariantCulture),
-                  RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
+                                octetCount.ToString(CultureInfo.InvariantCulture),
+                                RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException(sb.ToString (), position);
             }
 
-            byte[] values = new byte[octetCount];
+            var values = new byte[octetCount];
 
             try
             {
@@ -2030,7 +2114,9 @@ namespace Pdelvo.Minecraft.Network
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
 
             return values;
         }
@@ -2042,32 +2128,34 @@ namespace Pdelvo.Minecraft.Network
 
         internal int NextNull()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
                 if (0x05 != b)
                 {
-                    StringBuilder sb = new StringBuilder("Expected Null. ");
+                    var sb = new StringBuilder("Expected Null. ");
                     sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
                 // Next octet must be 0
-                b = GetNextOctet();
+                b = GetNextOctet ();
                 if (0x00 != b)
                 {
-                    StringBuilder sb = new StringBuilder("Null has non-zero size. ");
+                    var sb = new StringBuilder("Null has non-zero size. ");
                     sb.AppendFormat("Size: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
                 return 0;
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
         }
 
         internal bool IsNextSequence()
@@ -2077,34 +2165,36 @@ namespace Pdelvo.Minecraft.Network
 
         internal int NextSequence()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
                 if (0x30 != b)
                 {
-                    StringBuilder sb = new StringBuilder("Expected Sequence. ");
+                    var sb = new StringBuilder("Expected Sequence. ");
                     sb.AppendFormat("Specified Identifier: {0}",
-                      b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    b.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
-                int length = GetLength();
-                if (length > RemainingBytes())
+                int length = GetLength ();
+                if (length > RemainingBytes ())
                 {
-                    StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
+                    var sb = new StringBuilder("Incorrect Sequence Size. ");
                     sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                      length.ToString(CultureInfo.InvariantCulture),
-                      RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    length.ToString(CultureInfo.InvariantCulture),
+                                    RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
                 return length;
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
         }
 
         internal bool IsNextOctetString()
@@ -2114,33 +2204,35 @@ namespace Pdelvo.Minecraft.Network
 
         internal int NextOctetString()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
                 if (0x04 != b)
                 {
-                    StringBuilder sb = new StringBuilder("Expected Octet String. ");
+                    var sb = new StringBuilder("Expected Octet String. ");
                     sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
-                int length = GetLength();
-                if (length > RemainingBytes())
+                int length = GetLength ();
+                if (length > RemainingBytes ())
                 {
-                    StringBuilder sb = new StringBuilder("Incorrect Octet String Size. ");
+                    var sb = new StringBuilder("Incorrect Octet String Size. ");
                     sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                      length.ToString(CultureInfo.InvariantCulture),
-                      RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    length.ToString(CultureInfo.InvariantCulture),
+                                    RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
                 return length;
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
         }
 
         internal bool IsNextBitString()
@@ -2150,19 +2242,19 @@ namespace Pdelvo.Minecraft.Network
 
         internal int NextBitString()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
                 if (0x03 != b)
                 {
-                    StringBuilder sb = new StringBuilder("Expected Bit String. ");
+                    var sb = new StringBuilder("Expected Bit String. ");
                     sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
-                int length = GetLength();
+                int length = GetLength ();
 
                 // We need to consume unused bits, which is the first
                 //   octet of the remaing values
@@ -2171,13 +2263,17 @@ namespace Pdelvo.Minecraft.Network
                 length--;
 
                 if (0x00 != b)
-                { throw new BerDecodeException("The first octet of BitString must be 0", position); }
+                {
+                    throw new BerDecodeException("The first octet of BitString must be 0", position);
+                }
 
                 return length;
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
         }
 
         internal bool IsNextInteger()
@@ -2187,61 +2283,63 @@ namespace Pdelvo.Minecraft.Network
 
         internal byte[] NextInteger()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
                 if (0x02 != b)
                 {
-                    StringBuilder sb = new StringBuilder("Expected Integer. ");
+                    var sb = new StringBuilder("Expected Integer. ");
                     sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
-                int length = GetLength();
-                if (length > RemainingBytes())
+                int length = GetLength ();
+                if (length > RemainingBytes ())
                 {
-                    StringBuilder sb = new StringBuilder("Incorrect Integer Size. ");
+                    var sb = new StringBuilder("Incorrect Integer Size. ");
                     sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                      length.ToString(CultureInfo.InvariantCulture),
-                      RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    length.ToString(CultureInfo.InvariantCulture),
+                                    RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
                 return GetOctets(length);
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
         }
 
         internal byte[] NextOID()
         {
-            int position = CurrentPosition();
+            int position = CurrentPosition ();
 
             try
             {
-                byte b = GetNextOctet();
+                byte b = GetNextOctet ();
                 if (0x06 != b)
                 {
-                    StringBuilder sb = new StringBuilder("Expected Object Identifier. ");
+                    var sb = new StringBuilder("Expected Object Identifier. ");
                     sb.AppendFormat("Specified Identifier: {0}",
-                      b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    b.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
-                int length = GetLength();
-                if (length > RemainingBytes())
+                int length = GetLength ();
+                if (length > RemainingBytes ())
                 {
-                    StringBuilder sb = new StringBuilder("Incorrect Object Identifier Size. ");
+                    var sb = new StringBuilder("Incorrect Object Identifier Size. ");
                     sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                      length.ToString(CultureInfo.InvariantCulture),
-                      RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
+                                    length.ToString(CultureInfo.InvariantCulture),
+                                    RemainingBytes ().ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString (), position);
                 }
 
-                byte[] values = new byte[length];
+                var values = new byte[length];
 
                 for (int i = 0; i < length; i++)
                 {
@@ -2253,48 +2351,68 @@ namespace Pdelvo.Minecraft.Network
             }
 
             catch (ArgumentOutOfRangeException ex)
-            { throw new BerDecodeException("Error Parsing Key", position, ex); }
+            {
+                throw new BerDecodeException("Error Parsing Key", position, ex);
+            }
         }
     }
 
     [Serializable]
     public sealed class BerDecodeException : Exception, ISerializable
     {
-        private int m_position;
+        private readonly int m_position;
+
+        public BerDecodeException()
+        {
+        }
+
+        public BerDecodeException(String message)
+            : base(message)
+        {
+        }
+
+        public BerDecodeException(String message, Exception ex)
+            : base(message, ex)
+        {
+        }
+
+        public BerDecodeException(String message, int position)
+            : base(message)
+        {
+            m_position = position;
+        }
+
+        public BerDecodeException(String message, int position, Exception ex)
+            : base(message, ex)
+        {
+            m_position = position;
+        }
+
+        private BerDecodeException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            m_position = info.GetInt32("Position");
+        }
+
         public int Position
-        { get { return m_position; } }
+        {
+            get { return m_position; }
+        }
 
         public override string Message
         {
             get
             {
-                StringBuilder sb = new StringBuilder(base.Message);
+                var sb = new StringBuilder(base.Message);
 
                 sb.AppendFormat(" (Position {0}){1}",
-                  m_position, Environment.NewLine);
+                                m_position, Environment.NewLine);
 
-                return sb.ToString();
+                return sb.ToString ();
             }
         }
 
-        public BerDecodeException()
-            : base() { }
-
-        public BerDecodeException(String message)
-            : base(message) { }
-
-        public BerDecodeException(String message, Exception ex)
-            : base(message, ex) { }
-
-        public BerDecodeException(String message, int position)
-            : base(message) { m_position = position; }
-
-        public BerDecodeException(String message, int position, Exception ex)
-            : base(message, ex) { m_position = position; }
-
-        private BerDecodeException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        { m_position = info.GetInt32("Position"); }
+        #region ISerializable Members
 
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -2302,6 +2420,7 @@ namespace Pdelvo.Minecraft.Network
             base.GetObjectData(info, context);
             info.AddValue("Position", m_position);
         }
-    }
 
+        #endregion
+    }
 }

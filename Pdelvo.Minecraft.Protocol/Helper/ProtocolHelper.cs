@@ -1,20 +1,19 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Pdelvo.Minecraft.Protocol.Packets;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
+using Pdelvo.Minecraft.Protocol.Packets;
 
 namespace Pdelvo.Minecraft.Protocol.Helper
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public static class ProtocolHelper
     {
         /// <summary>
-        /// 
         /// </summary>
         private static readonly Dictionary<int, string> MinecraftVersionNames = new Dictionary<int, string>
                                                                                     {
@@ -40,22 +39,24 @@ namespace Pdelvo.Minecraft.Protocol.Helper
                                                                                         {42, "12w34b"},
                                                                                         {45, "12w40a"},
                                                                                         {46, "12w41a"},
-                                                                                        {47, "1.4"}
+                                                                                        {47, "1.4"},
+                                                                                        {48, "1.4.3"}
                                                                                     };
 
         public static void RegisterPackets(PacketEndPoint endPoint, PacketUsage packetUsage)
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            Assembly assembly = Assembly.GetExecutingAssembly ();
 
-            var possiblePackets = assembly.GetTypes().Where(a => a.GetCustomAttributes<PacketUsageAttribute>().Count() > 0);
+            IEnumerable<Type> possiblePackets =
+                assembly.GetTypes ().Where(a => a.GetCustomAttributes<PacketUsageAttribute> ().Count () > 0);
 
-            foreach (var item in possiblePackets)
+            foreach (Type item in possiblePackets)
             {
-                var usage = item.GetCustomAttribute<PacketUsageAttribute>();
+                var usage = item.GetCustomAttribute<PacketUsageAttribute> ();
 
-                if ((usage.PacketUsage & PacketUsage.Both) == PacketUsage.Both)
+                if ((usage.PacketUsage & packetUsage) == packetUsage)
                 {
-                    var packet = (Packet)Activator.CreateInstance(item);
+                    var packet = (Packet) Activator.CreateInstance(item);
 
                     endPoint.RegisterPacket(packet.Code, item);
                 }
@@ -63,63 +64,72 @@ namespace Pdelvo.Minecraft.Protocol.Helper
         }
 
         /// <summary>
-        /// Builds the mot D string in minecraft version pre 12w42b
+        ///   Builds the mot D string in minecraft version pre 12w42b
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="usedSlots">The used slots.</param>
-        /// <param name="maxSlots">The max slots.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="message"> The message. </param>
+        /// <param name="usedSlots"> The used slots. </param>
+        /// <param name="maxSlots"> The max slots. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         public static string BuildMotDString(string message, int usedSlots, int maxSlots)
         {
             return string.Format(CultureInfo.InvariantCulture, "{0}§{1}§{2}", message, usedSlots, maxSlots);
         }
 
         /// <summary>
-        /// Builds the mot D string in minecraft version pre 12w42b
+        ///   Builds the mot D string in minecraft version pre 12w42b
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="usedSlots">The used slots.</param>
-        /// <param name="maxSlots">The max slots.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public static string BuildMotDString(byte protocolVersion, string versionString, string message, int usedSlots, int maxSlots)
+        /// <param name="message"> The message. </param>
+        /// <param name="usedSlots"> The used slots. </param>
+        /// <param name="maxSlots"> The max slots. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
+        public static string BuildMotDString(byte protocolVersion, string versionString, string message, int usedSlots,
+                                             int maxSlots)
         {
-            return string.Format(CultureInfo.InvariantCulture, "§1\0{0}\0{1}\0{2}\0{3}\0{4}", protocolVersion, versionString, message, usedSlots, maxSlots);
+            return string.Format(CultureInfo.InvariantCulture, "§1\0{0}\0{1}\0{2}\0{3}\0{4}", protocolVersion,
+                                 versionString, message, usedSlots, maxSlots);
         }
 
         /// <summary>
-        /// Builds the mot D packet.
+        ///   Builds the mot D packet.
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="usedSlots">The used slots.</param>
-        /// <param name="maxSlots">The max slots.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="message"> The message. </param>
+        /// <param name="usedSlots"> The used slots. </param>
+        /// <param name="maxSlots"> The max slots. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         public static Packet BuildMotDPacket(string message, int usedSlots, int maxSlots)
         {
-            return new DisconnectPacket { Reason = BuildMotDString(message, usedSlots, maxSlots) };
+            return new DisconnectPacket {Reason = BuildMotDString(message, usedSlots, maxSlots)};
         }
 
         /// <summary>
-        /// Builds the mot D packet in minecraft version pre 12w42b
+        ///   Builds the mot D packet in minecraft version pre 12w42b
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="usedSlots">The used slots.</param>
-        /// <param name="maxSlots">The max slots.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public static Packet BuildMotDPacket(byte protocolVersion, string versionString, string message, int usedSlots, int maxSlots)
+        /// <param name="message"> The message. </param>
+        /// <param name="usedSlots"> The used slots. </param>
+        /// <param name="maxSlots"> The max slots. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
+        public static Packet BuildMotDPacket(byte protocolVersion, string versionString, string message, int usedSlots,
+                                             int maxSlots)
         {
-            return new DisconnectPacket { Reason = BuildMotDString(protocolVersion, versionString, message, usedSlots, maxSlots) };
+            return new DisconnectPacket
+                       {Reason = BuildMotDString(protocolVersion, versionString, message, usedSlots, maxSlots)};
         }
 
         /// <summary>
-        /// Gets the name of the minecraft version.
+        ///   Gets the name of the minecraft version.
         /// </summary>
-        /// <param name="version">The version.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="version"> The version. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         public static string GetMinecraftVersionName(int version)
         {
             if (MinecraftVersionNames.ContainsKey(version)) return MinecraftVersionNames[version];

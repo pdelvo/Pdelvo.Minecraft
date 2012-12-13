@@ -1,53 +1,68 @@
-﻿using System;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Pdelvo.Minecraft.Protocol.Packets;
 
 namespace Pdelvo.Minecraft.Protocol
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public interface IMinecraftRemoteInterface
     {
         /// <summary>
-        /// Gets the end point.
+        ///   Gets the end point.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         PacketEndPoint EndPoint { get; }
+
         /// <summary>
-        /// Occurs when [packet received].
+        ///   Occurs when [packet received].
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         event EventHandler<PacketEventArgs> PacketReceived;
+
         /// <summary>
-        /// Occurs when [aborted].
+        ///   Occurs when [aborted].
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         event EventHandler<RemoteInterfaceAbortedEventArgs> Aborted;
+
         /// <summary>
-        /// Sends the packet.
+        ///   Sends the packet.
         /// </summary>
-        /// <param name="packet">The packet.</param>
-        /// <remarks></remarks>
+        /// <param name="packet"> The packet. </param>
+        /// <remarks>
+        /// </remarks>
         void SendPacketQueued(Packet packet);
+
         /// <summary>
-        /// Runs this instance.
+        ///   Runs this instance.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         Task Run();
+
         /// <summary>
-        /// Shutdowns this instance.
+        ///   Shutdowns this instance.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         void Shutdown();
+
         /// <summary>
-        /// Registers the packet.
+        ///   Registers the packet.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="id">The id.</param>
-        /// <remarks></remarks>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter", Justification="The generic is used to have compile time error checking.")]
-        void RegisterPacket<T>(byte id) where T : Packet, new();
+        /// <typeparam name="T"> </typeparam>
+        /// <param name="id"> The id. </param>
+        /// <remarks>
+        /// </remarks>
+        [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter",
+            Justification = "The generic is used to have compile time error checking.")]
+        void RegisterPacket<T>(byte id) where T : Packet, new ();
     }
 }

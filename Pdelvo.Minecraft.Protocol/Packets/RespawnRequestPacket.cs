@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
@@ -10,40 +7,44 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     [PacketUsage(PacketUsage.ClientToServer)]
     public class RespawnRequestPacket : Packet
     {
-        public byte ResponseType { get; set; }
-          /// <summary>
-        /// Initializes a new instance of the <see cref="EmptyPacket"/> class.
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="EmptyPacket" /> class.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public RespawnRequestPacket()
         {
             Code = 0xCD;
         }
 
+        public byte ResponseType { get; set; }
+
 
         /// <summary>
-        /// Receives the specified reader.
+        ///   Receives the specified reader.
         /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="reader"> The reader. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnReceive(BigEndianStream reader, int version)
         {
             if (reader == null)
-                throw new System.ArgumentNullException("reader");
-            ResponseType = reader.ReadByte();
+                throw new ArgumentNullException("reader");
+            ResponseType = reader.ReadByte ();
         }
 
         /// <summary>
-        /// Sends the specified writer.
+        ///   Sends the specified writer.
         /// </summary>
-        /// <param name="writer">The writer.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="writer"> The writer. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnSend(BigEndianStream writer, int version)
         {
             if (writer == null)
-                throw new System.ArgumentNullException("writer");
+                throw new ArgumentNullException("writer");
             writer.Write(Code);
             writer.Write(ResponseType);
         }
