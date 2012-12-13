@@ -1,81 +1,93 @@
-﻿using System;
+using System;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     [PacketUsage(PacketUsage.Both)]
     public class BlockChange : Packet
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="BlockChange"/> class.
+        ///   Initializes a new instance of the <see cref="BlockChange" /> class.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public BlockChange()
         {
             Code = 0x35;
         }
 
         /// <summary>
-        /// Gets or sets the X.
+        ///   Gets or sets the X.
         /// </summary>
-        /// <value>The X.</value>
-        /// <remarks></remarks>
+        /// <value> The X. </value>
+        /// <remarks>
+        /// </remarks>
         public int PositionX { get; set; }
+
         /// <summary>
-        /// Gets or sets the Y.
+        ///   Gets or sets the Y.
         /// </summary>
-        /// <value>The Y.</value>
-        /// <remarks></remarks>
+        /// <value> The Y. </value>
+        /// <remarks>
+        /// </remarks>
         public byte PositionY { get; set; }
+
         /// <summary>
-        /// Gets or sets the Z.
+        ///   Gets or sets the Z.
         /// </summary>
-        /// <value>The Z.</value>
-        /// <remarks></remarks>
+        /// <value> The Z. </value>
+        /// <remarks>
+        /// </remarks>
         public int PositionZ { get; set; }
+
         /// <summary>
-        /// Gets or sets the type of the block.
+        ///   Gets or sets the type of the block.
         /// </summary>
-        /// <value>The type of the block.</value>
-        /// <remarks></remarks>
+        /// <value> The type of the block. </value>
+        /// <remarks>
+        /// </remarks>
         public short BlockType { get; set; }
+
         /// <summary>
-        /// Gets or sets the block metadata.
+        ///   Gets or sets the block metadata.
         /// </summary>
-        /// <value>The block metadata.</value>
-        /// <remarks></remarks>
+        /// <value> The block metadata. </value>
+        /// <remarks>
+        /// </remarks>
         public byte BlockMetadata { get; set; }
 
         /// <summary>
-        /// Receives the specified reader.
+        ///   Receives the specified reader.
         /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="reader"> The reader. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnReceive(BigEndianStream reader, int version)
         {
             if (reader == null)
                 throw new ArgumentNullException("reader");
-            PositionX = reader.ReadInt32();
-            PositionY = reader.ReadByte();
-            PositionZ = reader.ReadInt32();
+            PositionX = reader.ReadInt32 ();
+            PositionY = reader.ReadByte ();
+            PositionZ = reader.ReadInt32 ();
             if (version >= 38)
-                BlockType = reader.ReadInt16();
+                BlockType = reader.ReadInt16 ();
             else
-                BlockType = reader.ReadByte();
-            BlockMetadata = reader.ReadByte();
+                BlockType = reader.ReadByte ();
+            BlockMetadata = reader.ReadByte ();
         }
 
         /// <summary>
-        /// Sends the specified writer.
+        ///   Sends the specified writer.
         /// </summary>
-        /// <param name="writer">The writer.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="writer"> The writer. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         protected override void OnSend(BigEndianStream writer, int version)
         {
             if (writer == null)
@@ -87,7 +99,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (version >= 38)
                 writer.Write(BlockType);
             else
-                writer.Write((byte)BlockType);
+                writer.Write((byte) BlockType);
             writer.Write(BlockMetadata);
         }
     }

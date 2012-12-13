@@ -1,28 +1,29 @@
-﻿using System;
+using System;
 
 namespace Pdelvo.Minecraft.Protocol
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public class RemoteInterfaceAbortedEventArgs : EventArgs
     {
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="RemoteInterfaceAbortedEventArgs"/> class.
+        ///   Initializes a new instance of the <see cref="RemoteInterfaceAbortedEventArgs" /> class.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public RemoteInterfaceAbortedEventArgs()
         {
             CancelReason = RemoteInterfaceAbortReason.ThreadAborted;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RemoteInterfaceAbortedEventArgs"/> class.
+        ///   Initializes a new instance of the <see cref="RemoteInterfaceAbortedEventArgs" /> class.
         /// </summary>
-        /// <param name="ex">The ex.</param>
-        /// <remarks></remarks>
+        /// <param name="ex"> The ex. </param>
+        /// <remarks>
+        /// </remarks>
         public RemoteInterfaceAbortedEventArgs(Exception ex)
         {
             CancelReason = RemoteInterfaceAbortReason.Exception;
@@ -30,31 +31,32 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         /// <summary>
-        /// Gets the cancel reason.
+        ///   Gets the cancel reason.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public RemoteInterfaceAbortReason CancelReason { get; private set; }
 
         /// <summary>
-        /// Gets or sets the exception.
+        ///   Gets or sets the exception.
         /// </summary>
-        /// <value>The exception.</value>
-        /// <remarks></remarks>
+        /// <value> The exception. </value>
+        /// <remarks>
+        /// </remarks>
         public Exception Exception { get; set; }
     }
 
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public enum RemoteInterfaceAbortReason
     {
         /// <summary>
-        /// 
         /// </summary>
         ThreadAborted,
+
         /// <summary>
-        /// 
         /// </summary>
         Exception
     }

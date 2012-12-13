@@ -1,66 +1,68 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading.Tasks;
+using Pdelvo.Minecraft.Network;
 using Pdelvo.Minecraft.Protocol.Helper;
 using Pdelvo.Minecraft.Protocol.Packets;
-using Pdelvo.Minecraft.Network;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using System.Threading;
 
 namespace Pdelvo.Minecraft.Protocol
 {
     /// <summary>
-    /// Base class to handle a connection to a minecraft server or client
+    ///   Base class to handle a connection to a minecraft server or client
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public class PacketEndPoint
     {
         /// <summary>
-        /// 
         /// </summary>
-        private static readonly Dictionary<Type, Attribute[]> CustomAttributes = new Dictionary<Type, Attribute[]>();
+        private static readonly Dictionary<Type, Attribute[]> CustomAttributes = new Dictionary<Type, Attribute[]> ();
 
         /// <summary>
-        /// 
         /// </summary>
         private static readonly Dictionary<Type, LockFreeQueue<Packet>> PacketCache =
-            new Dictionary<Type, LockFreeQueue<Packet>>();
+            new Dictionary<Type, LockFreeQueue<Packet>> ();
 
         /// <summary>
-        /// 
         /// </summary>
         private readonly BigEndianStream _innerStream;
-        /// <summary>
-        /// 
-        /// </summary>
-        private readonly Dictionary<byte, List<Type>> _packets;
-        /// <summary>
-        /// 
-        /// </summary>
-        private readonly object _readLock = new object();
-        /// <summary>
-        /// 
-        /// </summary>
-        private readonly object _writeLock = new object();
 
         /// <summary>
-        /// Prevents a default instance of the <see cref="PacketEndPoint"/> class from being created.
         /// </summary>
-        /// <remarks></remarks>
+        private readonly Dictionary<byte, List<Type>> _packets;
+
+        /// <summary>
+        /// </summary>
+        private readonly object _readLock = new object ();
+
+        /// <summary>
+        /// </summary>
+        private readonly object _writeLock = new object ();
+
+        private Task<Packet> _sendingTask = Task.FromResult<Packet>(null);
+
+        /// <summary>
+        ///   Prevents a default instance of the <see cref="PacketEndPoint" /> class from being created.
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
         private PacketEndPoint()
         {
-            _packets = new Dictionary<byte, List<Type>>();
+            _packets = new Dictionary<byte, List<Type>> ();
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PacketEndPoint"/> class.
+        ///   Initializes a new instance of the <see cref="PacketEndPoint" /> class.
         /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="stream"> The stream. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         public PacketEndPoint(BigEndianStream stream, int version)
-            : this()
+            : this ()
         {
             if (stream == null)
                 throw new ArgumentNullException("stream");
@@ -70,80 +72,100 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PacketEndPoint"/> class.
+        ///   Initializes a new instance of the <see cref="PacketEndPoint" /> class.
         /// </summary>
-        /// <param name="parent">The parent.</param>
-        /// <param name="stream">The stream.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="parent"> The parent. </param>
+        /// <param name="stream"> The stream. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         public PacketEndPoint(PacketEndPoint parent, BigEndianStream stream, int version)
-            : this()
+            : this ()
         {
             if (parent == null)
                 throw new ArgumentNullException("parent");
 
             Version = version;
             _innerStream = stream;
-            foreach (var item in parent._packets)
+            foreach (KeyValuePair<byte, List<Type>> item in parent._packets)
             {
                 _packets.Add(item.Key, item.Value);
             }
         }
 
         /// <summary>
-        /// Gets or sets the version.
+        ///   Gets or sets the version.
         /// </summary>
-        /// <value>The version.</value>
-        /// <remarks></remarks>
+        /// <value> The version. </value>
+        /// <remarks>
+        /// </remarks>
         public int Version { get; set; }
+
         /// <summary>
-        /// Gets or sets a value indicating whether [use cache].
+        ///   Gets or sets a value indicating whether [use cache].
         /// </summary>
-        /// <value><c>true</c> if [use cache]; otherwise, <c>false</c>.</value>
-        /// <remarks></remarks>
+        /// <value> <c>true</c> if [use cache]; otherwise, <c>false</c> . </value>
+        /// <remarks>
+        /// </remarks>
         public bool UseCache { get; set; }
 
         /// <summary>
-        /// Gets the stream.
+        ///   Gets the stream.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public BigEndianStream Stream
         {
             get { return _innerStream; }
         }
 
-        /// <summary>
-        /// Gets the packets.
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly",
+            Justification = "Its a protocol version name")]
+        public bool Use12w18aFix { get; set; }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification="This method is doing a long running operation -> Linq query")]
+        public IEnumerable<KeyValuePair<byte, IEnumerable<Type>>> SupportedPackets
+        {
+            get { return _packets.Select(a => new KeyValuePair<byte, IEnumerable<Type>>(a.Key, a.Value)); }
+        }
+
+        /// <summary>
+        ///   Gets the packets.
+        /// </summary>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
+        [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "This method is doing a long running operation -> Linq query")]
         public IEnumerable<Type> GetPackets()
         {
             return _packets.SelectMany(item => item.Value);
         }
 
         /// <summary>
-        /// Gets the cached item count.
+        ///   Gets the cached item count.
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "This method is doing a long running operation -> Linq query")]
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
+        [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "This method is doing a long running operation -> Linq query")]
         public static int GetCachedItemCount()
         {
-            return (from x in GetCachedItems()
-                    select x.Item2).Sum();
+            return (from x in GetCachedItems ()
+                    select x.Item2).Sum ();
         }
 
         /// <summary>
-        /// Gets the cached items.
+        ///   Gets the cached items.
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification="Made to generade json output."),
-        System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "This method is doing a long running operation -> Linq query")]
-       public static IEnumerable<Tuple<Type, int>> GetCachedItems()
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
+        [SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures",
+            Justification = "Made to generade json output."),
+         SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
+             Justification = "This method is doing a long running operation -> Linq query")]
+        public static IEnumerable<Tuple<Type, int>> GetCachedItems()
         {
             return from x in PacketCache
                    where x.Value.Count != 0
@@ -151,28 +173,31 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         /// <summary>
-        /// Registers the packet.
+        ///   Registers the packet.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="id">The id.</param>
-        /// <remarks></remarks>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter", Justification = "For compile time validation")]
-        public void RegisterPacket<T>(byte id) where T : Packet, new()
+        /// <typeparam name="T"> </typeparam>
+        /// <param name="id"> The id. </param>
+        /// <remarks>
+        /// </remarks>
+        [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter",
+            Justification = "For compile time validation")]
+        public void RegisterPacket<T>(byte id) where T : Packet, new ()
         {
             //if (_packets.ContainsKey(id))
             //    throw new ArgumentException("Id already exists: " + id.ToString("X"), "id");
             if (_packets.ContainsKey(id))
-                _packets[id].Add(typeof(T));
+                _packets[id].Add(typeof (T));
             else
-                _packets.Add(id, new List<Type> { typeof(T) });
+                _packets.Add(id, new List<Type> {typeof (T)});
         }
 
 
         /// <summary>
-        /// Registers the packet.
+        ///   Registers the packet.
         /// </summary>
-        /// <param name="id">The id.</param>
-        /// <remarks></remarks>
+        /// <param name="id"> The id. </param>
+        /// <remarks>
+        /// </remarks>
         public void RegisterPacket(byte id, Type type)
         {
             //if (_packets.ContainsKey(id))
@@ -180,15 +205,16 @@ namespace Pdelvo.Minecraft.Protocol
             if (_packets.ContainsKey(id))
                 _packets[id].Add(type);
             else
-                _packets.Add(id, new List<Type> { type });
+                _packets.Add(id, new List<Type> {type});
         }
 
         /// <summary>
-        /// Reads the packet.
+        ///   Reads the packet.
         /// </summary>
-        /// <param name="id">The id.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="id"> The id. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         public Packet ReadPacket(byte id)
         {
             lock (_readLock)
@@ -200,7 +226,7 @@ namespace Pdelvo.Minecraft.Protocol
                                             where PacketSupportVersion(b) == true
                                             //because it is nullable bool
                                             select b;
-                Type packet = packets.First();
+                Type packet = packets.First ();
                 Packet p;
                 if (UseCache)
                 {
@@ -210,7 +236,7 @@ namespace Pdelvo.Minecraft.Protocol
                         {
                             if (!PacketCache.ContainsKey(packet))
                             {
-                                PacketCache.Add(packet, new LockFreeQueue<Packet>());
+                                PacketCache.Add(packet, new LockFreeQueue<Packet> ());
                             }
                         }
                     }
@@ -218,17 +244,17 @@ namespace Pdelvo.Minecraft.Protocol
                     if (!queue.TryDequeue(out p))
                     {
                         PacketFactory.PacketCreator creator = PacketFactory.GetCreator(packet);
-                        p = creator();
+                        p = creator ();
                     }
                 }
                 else
                 {
                     PacketFactory.PacketCreator creator = PacketFactory.GetCreator(packet);
-                    p = creator();
+                    p = creator ();
                 }
                 p.Receive(_innerStream, Version);
                 p.Cache = true;
-                p.Data = _innerStream.GetBuffer();
+                p.Data = _innerStream.GetBuffer ();
                 return p;
             }
         }
@@ -239,43 +265,43 @@ namespace Pdelvo.Minecraft.Protocol
             //    Monitor.Enter(_readLock);
             //try
             //{
-                if (!_packets.ContainsKey(id))
-                    throw new PacketException(id);
+            if (!_packets.ContainsKey(id))
+                throw new PacketException(id);
 
-                IEnumerable<Type> packets = from b in _packets[id]
-                                            where PacketSupportVersion(b) == true
-                                            //because it is nullable bool
-                                            select b;
-                Type packet = packets.First();
-                Packet p;
-                if (UseCache)
+            IEnumerable<Type> packets = from b in _packets[id]
+                                        where PacketSupportVersion(b) == true
+                                        //because it is nullable bool
+                                        select b;
+            Type packet = packets.First ();
+            Packet p;
+            if (UseCache)
+            {
+                if (!PacketCache.ContainsKey(packet))
                 {
-                    if (!PacketCache.ContainsKey(packet))
+                    lock (PacketCache)
                     {
-                        lock (PacketCache)
+                        if (!PacketCache.ContainsKey(packet))
                         {
-                            if (!PacketCache.ContainsKey(packet))
-                            {
-                                PacketCache.Add(packet, new LockFreeQueue<Packet>());
-                            }
+                            PacketCache.Add(packet, new LockFreeQueue<Packet> ());
                         }
                     }
-                    LockFreeQueue<Packet> queue = PacketCache[packet];
-                    if (!queue.TryDequeue(out p))
-                    {
-                        PacketFactory.PacketCreator creator = PacketFactory.GetCreator(packet);
-                        p = creator();
-                    }
                 }
-                else
+                LockFreeQueue<Packet> queue = PacketCache[packet];
+                if (!queue.TryDequeue(out p))
                 {
                     PacketFactory.PacketCreator creator = PacketFactory.GetCreator(packet);
-                    p = creator();
+                    p = creator ();
                 }
-                await p.ReceiveAsync(_innerStream, Version);
-                p.Cache = true;
-                p.Data = _innerStream.GetBuffer();
-                return p;
+            }
+            else
+            {
+                PacketFactory.PacketCreator creator = PacketFactory.GetCreator(packet);
+                p = creator ();
+            }
+            await p.ReceiveAsync(_innerStream, Version);
+            p.Cache = true;
+            p.Data = _innerStream.GetBuffer ();
+            return p;
             //}
             //finally
             //{
@@ -285,51 +311,54 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         /// <summary>
-        /// Reads the packet.
+        ///   Reads the packet.
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         [DebuggerStepThrough]
         public Packet ReadPacket()
         {
             lock (_readLock)
             {
-                byte id = _innerStream.ReadByte();
+                byte id = _innerStream.ReadByte ();
                 return ReadPacket(id);
             }
         }
 
-        Task<Packet> _sendingTask = Task.FromResult<Packet>(null);
-
         [DebuggerStepThrough]
         public Task<Packet> ReadPacketAsync()
         {
-            return _sendingTask = ReadPacketAsyncInternal();
+            return _sendingTask = ReadPacketAsyncInternal ();
         }
+
         [DebuggerStepThrough]
         private async Task<Packet> ReadPacketAsyncInternal()
         {
             await _sendingTask;
-            byte id = await _innerStream.ReadByteAsync();
+            byte id = await _innerStream.ReadByteAsync ();
             return await ReadPacketAsync(id, false);
         }
+
         /// <summary>
-        /// Packets the support version.
+        ///   Packets the support version.
         /// </summary>
-        /// <param name="packet">The packet.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="packet"> The packet. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         private bool? PacketSupportVersion(Type packet)
         {
             return IsPacketSupported(packet, Version);
         }
 
         /// <summary>
-        /// Determines whether [is packet supported] [the specified packet].
+        ///   Determines whether [is packet supported] [the specified packet].
         /// </summary>
-        /// <param name="packet">The packet.</param>
-        /// <param name="version">The version.</param>
-        /// <remarks></remarks>
+        /// <param name="packet"> The packet. </param>
+        /// <param name="version"> The version. </param>
+        /// <remarks>
+        /// </remarks>
         public static bool? IsPacketSupported(Type packet, int version)
         {
             bool throwOnRequired;
@@ -345,12 +374,13 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         /// <summary>
-        /// Gets the required version.
+        ///   Gets the required version.
         /// </summary>
-        /// <param name="packet">The packet.</param>
-        /// <param name="exception">if set to <c>true</c> [exception].</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="packet"> The packet. </param>
+        /// <param name="exception"> if set to <c>true</c> [exception]. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         internal static int GetRequiredVersion(Type packet, out bool exception)
         {
             Attribute[] attributes = null;
@@ -379,12 +409,13 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         /// <summary>
-        /// Gets the last supported version.
+        ///   Gets the last supported version.
         /// </summary>
-        /// <param name="packet">The packet.</param>
-        /// <param name="exception">if set to <c>true</c> [exception].</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <param name="packet"> The packet. </param>
+        /// <param name="exception"> if set to <c>true</c> [exception]. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
         internal static int GetLastSupportedVersion(Type packet, out bool exception)
         {
             Attribute[] attributes = null;
@@ -408,10 +439,11 @@ namespace Pdelvo.Minecraft.Protocol
 
 
         /// <summary>
-        /// Sends the packet.
+        ///   Sends the packet.
         /// </summary>
-        /// <param name="packet">The packet.</param>
-        /// <remarks></remarks>
+        /// <param name="packet"> The packet. </param>
+        /// <remarks>
+        /// </remarks>
         [Obsolete("Use async method instead")]
         public void SendPacket(Packet packet)
         {
@@ -419,7 +451,7 @@ namespace Pdelvo.Minecraft.Protocol
                 throw new ArgumentNullException("packet");
             lock (_writeLock)
             {
-                Type type = packet.GetType();
+                Type type = packet.GetType ();
                 PacketFactory.PacketSender p = PacketFactory.GetSender(type);
 
                 p(_innerStream, Version, packet);
@@ -431,7 +463,7 @@ namespace Pdelvo.Minecraft.Protocol
                         {
                             if (!PacketCache.ContainsKey(type))
                             {
-                                PacketCache.Add(type, new LockFreeQueue<Packet>());
+                                PacketCache.Add(type, new LockFreeQueue<Packet> ());
                             }
                         }
                     }
@@ -440,11 +472,12 @@ namespace Pdelvo.Minecraft.Protocol
                 }
             }
         }
+
         public async Task SendPacketAsync(Packet packet)
         {
             if (packet == null)
                 throw new ArgumentNullException("packet");
-            Type type = packet.GetType();
+            Type type = packet.GetType ();
             PacketFactory.PacketSenderAsync p = PacketFactory.GetSenderAsync(type);
 
             await p(_innerStream, Version, packet);
@@ -456,7 +489,7 @@ namespace Pdelvo.Minecraft.Protocol
                     {
                         if (!PacketCache.ContainsKey(type))
                         {
-                            PacketCache.Add(type, new LockFreeQueue<Packet>());
+                            PacketCache.Add(type, new LockFreeQueue<Packet> ());
                         }
                     }
                 }
@@ -466,23 +499,13 @@ namespace Pdelvo.Minecraft.Protocol
         }
 
         /// <summary>
-        /// Shutdowns this instance.
+        ///   Shutdowns this instance.
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public void Shutdown()
         {
-            _innerStream.Close();
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification="Its a protocol version name")]
-        public bool Use12w18aFix { get; set; }
-
-        public IEnumerable<KeyValuePair<byte, IEnumerable<Type>>> SupportedPackets
-        {
-            get
-            {
-                return _packets.Select(a => new KeyValuePair<byte, IEnumerable<Type>>(a.Key, a.Value));
-            }
+            _innerStream.Close ();
         }
     }
 }

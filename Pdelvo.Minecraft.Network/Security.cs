@@ -1,14 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Security.Cryptography;
 
 namespace Pdelvo.Minecraft.Network
 {
     public static class ProtocolSecurity
     {
-        static RandomNumberGenerator _secureRandomGenerator = RandomNumberGenerator.Create();
+        private static readonly RandomNumberGenerator _secureRandomGenerator = RandomNumberGenerator.Create ();
 
         public static RSAParameters GenerateRsaKeyPair(out RSACryptoServiceProvider provider)
         {
@@ -18,15 +16,16 @@ namespace Pdelvo.Minecraft.Network
 
         internal static RSAParameters GenerateRsaPublicKey(byte[] key)
         {
-            AsnKeyParser parser = new AsnKeyParser(key);
-            return parser.ParseRSAPublicKey();
+            var parser = new AsnKeyParser(key);
+            return parser.ParseRSAPublicKey ();
         }
 
         private static RSAParameters GenerateRsaKey(byte[] key, bool isPrivate)
         {
-            AsnKeyParser parser = new AsnKeyParser(key);
-            return isPrivate ? parser.ParseRSAPrivateKey() : parser.ParseRSAPublicKey();
+            var parser = new AsnKeyParser(key);
+            return isPrivate ? parser.ParseRSAPrivateKey () : parser.ParseRSAPublicKey ();
         }
+
         public static byte[] GenerateAes128Key()
         {
             var bytes = new byte[16];
@@ -40,7 +39,7 @@ namespace Pdelvo.Minecraft.Network
                 throw new ArgumentNullException("data");
             if (key == null)
                 throw new ArgumentNullException("key");
-            var provider = RSA.Create();
+            RSA provider = RSA.Create ();
             provider.ImportParameters(GenerateRsaKey(key, isPrivate));
             return provider.DecryptValue(data);
         }
@@ -49,7 +48,7 @@ namespace Pdelvo.Minecraft.Network
         {
             if (data == null)
                 throw new ArgumentNullException("data");
-            return provider.Decrypt(data,false);
+            return provider.Decrypt(data, false);
         }
 
         public static byte[] RsaEncrypt(byte[] data, byte[] key, bool isPrivate)
@@ -58,21 +57,21 @@ namespace Pdelvo.Minecraft.Network
                 throw new ArgumentNullException("data");
             if (key == null)
                 throw new ArgumentNullException("key");
-            var provider = (RSACryptoServiceProvider)RSA.Create();
+            var provider = (RSACryptoServiceProvider) RSA.Create ();
             provider.ImportParameters(GenerateRsaKey(key, isPrivate));
             return provider.Encrypt(data, false);
         }
 
         public static string ComputeHash(params byte[][] bytes)
         {
-            List<byte> b = new List<byte>();
-            foreach (var item in bytes)
+            var b = new List<byte> ();
+            foreach (byte[] item in bytes)
             {
                 if (item == null)
                     if (bytes == null) throw new ArgumentNullException("bytes", "Inner array is null");
                 b.AddRange(item);
             }
-            return ProtocolCryptography.JavaHexDigest(b.ToArray());
+            return ProtocolCryptography.JavaHexDigest(b.ToArray ());
         }
     }
 }

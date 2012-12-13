@@ -1,54 +1,58 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public class MetadataInfo
     {
         /// <summary>
-        /// Gets or sets the data.
+        ///   Gets or sets the data.
         /// </summary>
-        /// <value>The data.</value>
-        /// <remarks></remarks>
+        /// <value> The data. </value>
+        /// <remarks>
+        /// </remarks>
         public Dictionary<byte, object> Data { get; set; }
 
         /// <summary>
-        /// Reads the specified reader.
+        ///   Reads the specified reader.
         /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="version">The version.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "version", Justification="For future compatibility")]
+        /// <param name="reader"> The reader. </param>
+        /// <param name="version"> The version. </param>
+        /// <returns> </returns>
+        /// <remarks>
+        /// </remarks>
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "version",
+            Justification = "For future compatibility")]
         public static MetadataInfo Read(BigEndianStream reader, int version)
         {
             if (reader == null)
-                throw new System.ArgumentNullException("reader");
+                throw new ArgumentNullException("reader");
             byte b = 0;
-            var data = new Dictionary<byte, object>();
-            while ((b = reader.ReadByte()) != 127)
+            var data = new Dictionary<byte, object> ();
+            while ((b = reader.ReadByte ()) != 127)
             {
                 switch (b >> 5)
                 {
                     case 0:
-                        data.Add(b, reader.ReadByte());
+                        data.Add(b, reader.ReadByte ());
                         break;
                     case 1:
-                        data.Add(b, reader.ReadInt16());
+                        data.Add(b, reader.ReadInt16 ());
                         break;
                     case 2:
-                        data.Add(b, reader.ReadInt32());
+                        data.Add(b, reader.ReadInt32 ());
                         break;
                     case 3:
-                        data.Add(b, reader.ReadSingle());
+                        data.Add(b, reader.ReadSingle ());
                         break;
                     case 4:
-                        data.Add(b, reader.ReadString16());
+                        data.Add(b, reader.ReadString16 ());
                         break;
                     case 5:
                         data.Add(b, ItemStack.Read(reader));
@@ -56,7 +60,11 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                     case 6:
                         data.Add(b,
                                  new EntityInformation
-                                     {Data1 = reader.ReadInt32(), Data2 = reader.ReadInt32(), Data3 = reader.ReadInt32()});
+                                     {
+                                         Data1 = reader.ReadInt32 (),
+                                         Data2 = reader.ReadInt32 (),
+                                         Data3 = reader.ReadInt32 ()
+                                     });
                         break;
                     default:
                         break;
@@ -66,24 +74,25 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         }
 
         /// <summary>
-        /// Writes the metadata.
+        ///   Writes the metadata.
         /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="writer">The writer.</param>
-        /// <remarks></remarks>
+        /// <param name="data"> The data. </param>
+        /// <param name="writer"> The writer. </param>
+        /// <remarks>
+        /// </remarks>
         public static void WriteMetadata(MetadataInfo data, BigEndianStream writer)
         {
             if (writer == null)
-                throw new System.ArgumentNullException("writer");
+                throw new ArgumentNullException("writer");
             if (data == null)
             {
                 writer.Write((byte) 127);
                 return;
             }
 
-            if (data.Data == null) data.Data = new Dictionary<byte, object>();
+            if (data.Data == null) data.Data = new Dictionary<byte, object> ();
 
-            foreach (var item in data.Data)
+            foreach (KeyValuePair<byte, object> item in data.Data)
             {
                 if (item.Value is byte)
                 {
@@ -126,28 +135,33 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     }
 
     /// <summary>
-    /// 
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public class EntityInformation
     {
         /// <summary>
-        /// Gets or sets the data1.
+        ///   Gets or sets the data1.
         /// </summary>
-        /// <value>The data1.</value>
-        /// <remarks></remarks>
+        /// <value> The data1. </value>
+        /// <remarks>
+        /// </remarks>
         public int Data1 { get; set; }
+
         /// <summary>
-        /// Gets or sets the data2.
+        ///   Gets or sets the data2.
         /// </summary>
-        /// <value>The data2.</value>
-        /// <remarks></remarks>
+        /// <value> The data2. </value>
+        /// <remarks>
+        /// </remarks>
         public int Data2 { get; set; }
+
         /// <summary>
-        /// Gets or sets the data3.
+        ///   Gets or sets the data3.
         /// </summary>
-        /// <value>The data3.</value>
-        /// <remarks></remarks>
+        /// <value> The data3. </value>
+        /// <remarks>
+        /// </remarks>
         public int Data3 { get; set; }
     }
 }
