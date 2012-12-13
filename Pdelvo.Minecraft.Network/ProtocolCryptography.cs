@@ -11,9 +11,12 @@ using System.Text;
 
 namespace Pdelvo.Minecraft.Network
 {
-    //Thanks to SirCmpwn!!!!!!!
+    //Thanks to SirCmpwn!
     public static class ProtocolCryptography
     {
+        /// <summary>
+        /// Produces a Java-style SHA-1 hex digest of the given data.
+        /// </summary>
         public static string JavaHexDigest(byte[] data)
         {
             SHA1 sha1 = SHA1.Create ();
@@ -22,25 +25,29 @@ namespace Pdelvo.Minecraft.Network
             if (negative) // check for negative hashes
                 hash = TwosCompliment(hash);
             // Create the string and trim away the zeroes
-            string digest = GetHexString(hash).Trim('0');
+            string digest = GetHexString(hash).TrimStart('0');
             if (negative)
                 digest = "-" + digest;
             return digest;
         }
 
+        /// <summary>
+        /// Converts the given n-bit little-endian unsigned number into
+        /// lowercase hexadecimal form.
+        /// </summary>
         private static string GetHexString(byte[] p)
         {
             string result = "";
             for (int i = 0; i < p.Length; i++)
-            {
-                if (p[i] < 0x10)
-                    result += "0";
-                result += p[i].ToString("x", CultureInfo.InvariantCulture); // Converts to hex string
-            }
+                result += p[i].ToString("x2", CultureInfo.InvariantCulture);
             return result;
         }
 
-        private static byte[] TwosCompliment(byte[] p) // little endian
+        /// <summary>
+        /// Given an array that represents an n-bit little-endian signed number,
+        /// the two's compliment (negation) is produced.
+        /// </summary>
+        private static byte[] TwosCompliment(byte[] p)
         {
             int i;
             bool carry = true;
