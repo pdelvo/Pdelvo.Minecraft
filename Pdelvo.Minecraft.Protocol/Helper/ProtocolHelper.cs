@@ -41,7 +41,8 @@ namespace Pdelvo.Minecraft.Protocol.Helper
                                                                                         {46, "12w41a"},
                                                                                         {47, "1.4"},
                                                                                         {48, "1.4.3"},
-                                                                                        {49, "1.4.5"}
+                                                                                        {49, "1.4.5"},
+                                                                                        {50, "12w49a"}
                                                                                     };
 
         public static void RegisterPackets(PacketEndPoint endPoint, PacketUsage packetUsage)

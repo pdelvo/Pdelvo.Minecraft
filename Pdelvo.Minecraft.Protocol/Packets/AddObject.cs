@@ -52,6 +52,12 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// </remarks>
         public int PositionZ { get; set; }
 
+
+        public byte Yaw { get; set; }
+
+
+        public byte Pitch { get; set; }
+
         /// <summary>
         ///   Gets or sets the fireball thrower.
         /// </summary>
@@ -112,6 +118,13 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             PositionX = reader.ReadInt32 ();
             PositionY = reader.ReadInt32 ();
             PositionZ = reader.ReadInt32 ();
+
+            if (version >= 50)
+            {
+                Yaw = reader.ReadByte();
+                Pitch = reader.ReadByte();
+            }
+
             if ((ObjectData = reader.ReadInt32 ()) > 0)
             {
                 UnknownX = reader.ReadInt16 ();
@@ -138,6 +151,12 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(PositionY);
             writer.Write(PositionZ);
             writer.Write(ObjectData);
+
+            if (version >= 50)
+            {
+                writer.Write(Yaw);
+                writer.Write(Pitch);
+            }
             if (ObjectData > 0)
             {
                 writer.Write(UnknownX);
