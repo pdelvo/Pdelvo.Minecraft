@@ -27,6 +27,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
         public short Count { get; set; }
         public int DataLength { get; set; } //length?
+        public bool Unknown { get; set; }
         public byte[] ChunkData { get; set; }
         public IEnumerable<ChunkBulkMetaData> ChunkMetaData { get; set; }
 
@@ -50,6 +51,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
             Count = reader.ReadInt16 ();
             DataLength = reader.ReadInt32 ();
+            if (version >= 51)
+                Unknown = reader.ReadBoolean ();
             ChunkData = reader.ReadBytes(DataLength);
             var list = new List<ChunkBulkMetaData> ();
             for (int i = 0; i < Count; i++)
@@ -78,6 +81,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new ArgumentNullException("writer");
             writer.Write(Code);
             writer.Write(Count);
+
+            if (version >= 51)
+                writer.Write(Unknown);
             writer.Write(DataLength);
             writer.Write(ChunkData);
 

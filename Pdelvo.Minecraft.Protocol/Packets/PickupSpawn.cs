@@ -8,6 +8,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// <remarks>
     /// </remarks>
     [PacketUsage(PacketUsage.Both)]
+    [LastSupportedVersion(50)]
     public class PickupSpawn : Packet, IEntityPacket
     {
         /// <summary>
