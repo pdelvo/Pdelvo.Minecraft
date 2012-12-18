@@ -40,7 +40,8 @@ namespace Pdelvo.Minecraft.Protocol.Helper
                                                                                         {45, "12w40a"},
                                                                                         {46, "12w41a"},
                                                                                         {47, "1.4"},
-                                                                                        {48, "1.4.3"}
+                                                                                        {48, "1.4.3"},
+                                                                                        {49, "1.4.5"}
                                                                                     };
 
         public static void RegisterPackets(PacketEndPoint endPoint, PacketUsage packetUsage)
@@ -48,7 +49,7 @@ namespace Pdelvo.Minecraft.Protocol.Helper
             Assembly assembly = Assembly.GetExecutingAssembly ();
 
             IEnumerable<Type> possiblePackets =
-                assembly.GetTypes ().Where(a => a.GetCustomAttributes<PacketUsageAttribute> ().Count () > 0);
+                assembly.GetTypes ().Where(a => a.GetCustomAttributes<PacketUsageAttribute> ().Any());
 
             foreach (Type item in possiblePackets)
             {

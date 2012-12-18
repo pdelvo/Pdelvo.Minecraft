@@ -61,7 +61,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new ArgumentNullException("reader");
             ItemType = reader.ReadInt16 ();
             ItemId = reader.ReadInt16 ();
-            InnerData = reader.ReadBytes(reader.ReadByte ());
+            InnerData = reader.ReadBytes(version >= 49 ? reader.ReadInt16() : reader.ReadByte());
         }
 
         /// <summary>
@@ -78,10 +78,16 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(Code);
             writer.Write(ItemType);
             writer.Write(ItemId);
-            if (InnerData == null)
-                writer.Write((byte) 0);
+            if (version >= 49)
+                if (InnerData == null)
+                    writer.Write((byte)0);
+                else
+                    writer.Write((byte)InnerData.Count());
             else
-                writer.Write((byte) InnerData.Count ());
+                if (InnerData == null)
+                    writer.Write((short)0);
+                else
+                    writer.Write((short)InnerData.Count());
             writer.Write(InnerData.ToArray ());
         }
     }
