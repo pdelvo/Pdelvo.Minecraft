@@ -80,14 +80,14 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(ItemId);
             if (version >= 49)
                 if (InnerData == null)
-                    writer.Write((byte)0);
-                else
-                    writer.Write((byte)InnerData.Count());
-            else
-                if (InnerData == null)
                     writer.Write((short)0);
                 else
                     writer.Write((short)InnerData.Count());
+            else
+                if (InnerData == null)
+                    writer.Write((byte)0);
+                else
+                    writer.Write((byte)InnerData.Count());
             writer.Write(InnerData.ToArray ());
         }
     }
