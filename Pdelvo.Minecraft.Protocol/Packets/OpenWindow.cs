@@ -53,6 +53,14 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public byte Slots { get; set; }
 
         /// <summary>
+        ///   Determine whether or not to use the provided window title
+        /// </summary>
+        /// <value> True if the provided window title should be used, otherwise false. </value>
+        /// <remarks>
+        /// </remarks>
+        public bool UseWindowTitle { get; set; }
+
+        /// <summary>
         ///   Receives the specified reader.
         /// </summary>
         /// <param name="reader"> The reader. </param>
@@ -67,6 +75,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             InventoryType = reader.ReadByte ();
             WindowTitle = reader.ReadString16 ();
             Slots = reader.ReadByte ();
+
+            if (version >= 52)
+                UseWindowTitle = reader.ReadBoolean ();
         }
 
         /// <summary>
@@ -85,6 +96,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(InventoryType);
             writer.Write(WindowTitle);
             writer.Write(Slots);
+            
+            if (version >= 52)
+                writer.Write(UseWindowTitle);
         }
     }
 }
