@@ -108,6 +108,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Packets\DisconnectPacket.cs" />
+    <Compile Include="Packets\DisplayScoreboard.cs" />
     <Compile Include="Packets\EmptyPacket.cs" />
     <Compile Include="Packets\EnchantItem.cs" />
     <Compile Include="Packets\EncryptionKeyRequest.cs" />
@@ -167,6 +168,7 @@
     <Compile Include="Packets\RemoveEntityEffect.cs" />
     <Compile Include="Packets\Respawn.cs" />
     <Compile Include="Packets\RespawnRequestPacket.cs" />
+    <Compile Include="Packets\CreateScoreboard.cs" />
     <Compile Include="Packets\SetSlot.cs" />
     <Compile Include="Packets\SettingsChanged.cs" />
     <Compile Include="Packets\SoundEffect.cs" />
@@ -177,6 +179,7 @@
     <Compile Include="Packets\Transaction.cs" />
     <Compile Include="Packets\MapChunkBulkPacket.cs" />
     <Compile Include="Packets\UpdateHealth.cs" />
+    <Compile Include="Packets\UpdateScore.cs" />
     <Compile Include="Packets\UpdateTileEntity.cs" />
     <Compile Include="Packets\UpdateProgressBar.cs" />
     <Compile Include="Packets\UpdateSign.cs" />
