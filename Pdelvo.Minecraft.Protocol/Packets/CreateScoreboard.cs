@@ -11,6 +11,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks>
     /// </remarks>
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class CreateScoreboard : Packet
     {
         public string ScoreboardName { get; set; }

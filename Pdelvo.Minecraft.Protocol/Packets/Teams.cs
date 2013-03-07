@@ -4,6 +4,7 @@ using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class Teams : Packet
     {
         public string TeamName { get; set; }
@@ -39,19 +40,25 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
             TeamName = reader.ReadString16();
             Mode = reader.ReadByte();
-            TeamDisplayName = reader.ReadString16();
-            TeamPrefix = reader.ReadString16();
-            FriendlyFire = reader.ReadBoolean();
-            PlayerCount = reader.ReadInt16();
-
-            var collection = new List<string> ();
-
-            for (int i = 0; i < PlayerCount; i++)
+            if (Mode == 2 || Mode == 0)
             {
-                collection.Add(reader.ReadString16 ());
+                TeamDisplayName = reader.ReadString16();
+                TeamPrefix = reader.ReadString16();
+                FriendlyFire = reader.ReadBoolean();
             }
+            if (Mode == 0 || Mode == 3 || Mode == 4)
+            {
+                PlayerCount = reader.ReadInt16();
 
-            Players = collection.ToArray ();
+                var collection = new List<string>();
+
+                for (int i = 0; i < PlayerCount; i++)
+                {
+                    collection.Add(reader.ReadString16());
+                }
+
+                Players = collection.ToArray();
+            }
         }
 
         /// <summary>
@@ -69,16 +76,21 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
             writer.Write(TeamName);
             writer.Write(Mode);
-            writer.Write(TeamDisplayName);
-            writer.Write(TeamPrefix);
-            writer.Write(FriendlyFire);
-            writer.Write(PlayerCount);
+            if (Mode == 2 || Mode == 0)
+            {
+                writer.Write(TeamDisplayName);
+                writer.Write(TeamPrefix);
+                writer.Write(FriendlyFire);
+                writer.Write(PlayerCount);
+            }
 
             Players = Players ?? new string[0];
-
-            foreach (var player in Players)
+            if (Mode == 0 || Mode == 3 || Mode == 4)
             {
-                writer.Write(player);
+                foreach (var player in Players)
+                {
+                    writer.Write(player);
+                }
             }
         }
     }

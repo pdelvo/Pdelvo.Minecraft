@@ -3,6 +3,7 @@ using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
 {
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class DisplayScoreboard : Packet
     {
         public byte Position { get; set; }
