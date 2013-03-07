@@ -12,14 +12,14 @@ namespace Pdelvo.Minecraft.Protocol.Helper
 
         /// <summary>
         /// </summary>
-        public const int MaxSupportedClientVersion = 58;
+        public const int MaxSupportedClientVersion = 60;
 
         /// <summary>
         /// </summary>
-        public const int MinSupportedServerVersion = 22;
+        public const int MinSupportedServerVersion = 60;
 
         /// <summary>
         /// </summary>
-        public const int MaxSupportedServerVersion = 58;
+        public const int MaxSupportedServerVersion = 60;
     }
 }
