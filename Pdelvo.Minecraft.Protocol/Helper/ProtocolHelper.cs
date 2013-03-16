@@ -52,7 +52,7 @@ namespace Pdelvo.Minecraft.Protocol.Helper
                                                                                         {57, "13w05b"},
                                                                                         {58, "13w06a"},
                                                                                         {59, "13w09b"},
-                                                                                        {60, "13w09c"}
+                                                                                        {60, "1.5.0"}
                                                                                     };
 
         public static void RegisterPackets(PacketEndPoint endPoint, PacketUsage packetUsage)
