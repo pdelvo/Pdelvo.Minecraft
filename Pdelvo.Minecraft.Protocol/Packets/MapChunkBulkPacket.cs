@@ -81,10 +81,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new ArgumentNullException("writer");
             writer.Write(Code);
             writer.Write(Count);
-
+            writer.Write(DataLength);
             if (version >= 51)
                 writer.Write(Unknown);
-            writer.Write(DataLength);
             writer.Write(ChunkData);
 
             foreach (ChunkBulkMetaData item in ChunkMetaData)
