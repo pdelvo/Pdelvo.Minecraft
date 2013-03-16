@@ -16,7 +16,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// </remarks>
         public DisplayScoreboard()
         {
-            Code = 0xCF;
+            Code = 0xD0;
         }
 
         /// <summary>
