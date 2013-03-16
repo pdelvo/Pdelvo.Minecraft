@@ -12,7 +12,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public string TeamDisplayName { get; set; }
         public string TeamPrefix { get; set; }
         public string TeamSufix { get; set; }
-        public bool FriendlyFire { get; set; }
+        public byte FriendlyFire { get; set; }
         public short PlayerCount { get; set; }
         public string[] Players { get; set; }
 
@@ -44,7 +44,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             {
                 TeamDisplayName = reader.ReadString16();
                 TeamPrefix = reader.ReadString16();
-                FriendlyFire = reader.ReadBoolean();
+                if (version >= 60)
+                    FriendlyFire = reader.ReadByte();
+                else
+                    FriendlyFire = (byte) (reader.ReadBoolean() ? 1 : 0);
             }
             if (Mode == 0 || Mode == 3 || Mode == 4)
             {
@@ -80,7 +83,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             {
                 writer.Write(TeamDisplayName);
                 writer.Write(TeamPrefix);
-                writer.Write(FriendlyFire);
+                if (version >= 60)
+                    writer.Write(FriendlyFire);
+                else
+                    writer.Write(FriendlyFire != 0);
                 writer.Write(PlayerCount);
             }
 
