@@ -44,6 +44,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             {
                 TeamDisplayName = reader.ReadString16();
                 TeamPrefix = reader.ReadString16();
+                TeamSufix = reader.ReadString16();
                 if (version >= 60)
                     FriendlyFire = reader.ReadByte();
                 else
@@ -83,14 +84,15 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             {
                 writer.Write(TeamDisplayName);
                 writer.Write(TeamPrefix);
+                writer.Write(TeamSufix);
                 if (version >= 60)
                     writer.Write(FriendlyFire);
                 else
                     writer.Write(FriendlyFire != 0);
-                writer.Write(PlayerCount);
             }
 
             Players = Players ?? new string[0];
+            writer.Write(PlayerCount);
             if (Mode == 0 || Mode == 3 || Mode == 4)
             {
                 foreach (var player in Players)

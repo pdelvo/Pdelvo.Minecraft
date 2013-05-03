@@ -72,7 +72,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The unknown X. </value>
         /// <remarks>
         /// </remarks>
-        public short UnknownX { get; set; }
+        public short SpeedX { get; set; }
 
         /// <summary>
         ///   Gets or sets the unknown Y.
@@ -80,7 +80,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The unknown Y. </value>
         /// <remarks>
         /// </remarks>
-        public short UnknownY { get; set; }
+        public short SpeedY { get; set; }
 
         /// <summary>
         ///   Gets or sets the unknown Z.
@@ -88,7 +88,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The unknown Z. </value>
         /// <remarks>
         /// </remarks>
-        public short UnknownZ { get; set; }
+        public short SpeedZ { get; set; }
 
         #region IEntityPacket Members
 
@@ -121,15 +121,15 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
             if (version >= 50)
             {
-                Yaw = reader.ReadByte();
                 Pitch = reader.ReadByte();
+                Yaw = reader.ReadByte();
             }
 
             if ((ObjectData = reader.ReadInt32 ()) > 0)
             {
-                UnknownX = reader.ReadInt16 ();
-                UnknownY = reader.ReadInt16 ();
-                UnknownZ = reader.ReadInt16 ();
+                SpeedX = reader.ReadInt16 ();
+                SpeedY = reader.ReadInt16 ();
+                SpeedZ = reader.ReadInt16 ();
             }
         }
 
@@ -150,18 +150,18 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(PositionX);
             writer.Write(PositionY);
             writer.Write(PositionZ);
-            writer.Write(ObjectData);
 
             if (version >= 50)
             {
-                writer.Write(Yaw);
                 writer.Write(Pitch);
+                writer.Write(Yaw);
             }
+            writer.Write(ObjectData);
             if (ObjectData > 0)
             {
-                writer.Write(UnknownX);
-                writer.Write(UnknownY);
-                writer.Write(UnknownZ);
+                writer.Write(SpeedX);
+                writer.Write(SpeedY);
+                writer.Write(SpeedZ);
             }
         }
     }
