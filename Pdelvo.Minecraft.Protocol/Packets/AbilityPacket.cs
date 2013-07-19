@@ -22,8 +22,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         public bool MayFly { get; set; }
         public bool Invulnerable { get; set; }
 
-        public byte FlyingSpeed { get; set; }
-        public byte WalkSpeed { get; set; }
+        public float FlyingSpeed { get; set; }
+        public float WalkSpeed { get; set; }
 
 
         /// <summary>
@@ -44,8 +44,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 InstantBuild = (dataByte & 0x2) != 0;
                 MayFly = (dataByte & 0x4) != 0;
                 Invulnerable = (dataByte & 0x8) != 0;
-                FlyingSpeed = reader.ReadByte ();
-                WalkSpeed = reader.ReadByte ();
+                FlyingSpeed = version >= 72 ? reader.ReadSingle() : reader.ReadByte() /255f;
+                WalkSpeed = version >= 72 ? reader.ReadSingle() : reader.ReadByte() / 255f;
             }
             else
             {
@@ -54,8 +54,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 MayFly = reader.ReadBoolean ();
                 Invulnerable = reader.ReadBoolean ();
 
-                FlyingSpeed = 15;
-                WalkSpeed = 25;
+                FlyingSpeed = version >= 72 ? 15 : 15 / 255f;
+                WalkSpeed = version >= 72 ? 25 : 25 / 255f;
             }
         }
 
@@ -81,8 +81,16 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 d |= (byte) ((MayFly ? 1 : 0) << 2);
                 d |= (byte) ((Invulnerable ? 1 : 0) << 3);
                 writer.Write(d);
-                writer.Write(FlyingSpeed);
-                writer.Write(WalkSpeed);
+                if (version >= 72)
+                {
+                    writer.Write(FlyingSpeed);
+                    writer.Write(WalkSpeed);
+                }
+                else
+                {
+                    writer.Write((byte)(FlyingSpeed * 255f));
+                    writer.Write((byte)(WalkSpeed * 255f));
+                }
             }
             else
             {

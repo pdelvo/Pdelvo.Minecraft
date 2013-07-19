@@ -26,7 +26,13 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The action Id. </value>
         /// <remarks>
         /// </remarks>
-        public byte ActionId { get; set; }
+        public byte ActionId
+        {
+            get;
+            set;
+        }
+
+        public int Unknown { get; set; }
 
         #region IEntityPacket Members
 
@@ -36,7 +42,11 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The entity Id. </value>
         /// <remarks>
         /// </remarks>
-        public int EntityId { get; set; }
+        public int EntityId
+        {
+            get;
+            set;
+        }
 
         #endregion
 
@@ -51,8 +61,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         {
             if (reader == null)
                 throw new ArgumentNullException("reader");
-            EntityId = reader.ReadInt32 ();
-            ActionId = reader.ReadByte ();
+            EntityId = reader.ReadInt32();
+            ActionId = reader.ReadByte();
+            if (version >= 72)
+                Unknown = reader.ReadInt32();
         }
 
         /// <summary>
@@ -69,6 +81,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(Code);
             writer.Write(EntityId);
             writer.Write(ActionId);
+            if (version >= 72)
+                writer.Write(Unknown);
         }
     }
 }

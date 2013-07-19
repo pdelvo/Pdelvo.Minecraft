@@ -81,6 +81,7 @@
     <Compile Include="ClientRemoteInterface.cs" />
     <Compile Include="EnchantHelper.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="LoginExtensions.cs" />
     <Compile Include="NetworkExtensions.cs" />
     <Compile Include="Helper\ProtocolExtensions.cs" />
     <Compile Include="Helper\Dieable.cs" />
@@ -123,6 +124,7 @@
     <Compile Include="Packets\EntityLookAndRelativeMove.cs" />
     <Compile Include="Packets\EntityMetadata.cs" />
     <Compile Include="Packets\EntityPainting.cs" />
+    <Compile Include="Packets\EntityProperties.cs" />
     <Compile Include="Packets\EntityRelativeMove.cs" />
     <Compile Include="Packets\EntityStatus.cs" />
     <Compile Include="Packets\EntityTeleport.cs" />
@@ -174,6 +176,7 @@
     <Compile Include="Packets\SoundEffect.cs" />
     <Compile Include="Packets\SpawnPosition.cs" />
     <Compile Include="Packets\StanceUpdate.cs" />
+    <Compile Include="Packets\SteerVehicle.cs" />
     <Compile Include="Packets\Teams.cs" />
     <Compile Include="Packets\Thunderbolt.cs" />
     <Compile Include="Packets\TimeUpdatePacket.cs" />

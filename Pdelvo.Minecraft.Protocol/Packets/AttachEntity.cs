@@ -26,7 +26,13 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The vehicle Id. </value>
         /// <remarks>
         /// </remarks>
-        public int VehicleId { get; set; }
+        public int VehicleId
+        {
+            get;
+            set;
+        }
+
+        public bool Leash { get; set; }
 
         #region IEntityPacket Members
 
@@ -36,7 +42,11 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The entity Id. </value>
         /// <remarks>
         /// </remarks>
-        public int EntityId { get; set; }
+        public int EntityId
+        {
+            get;
+            set;
+        }
 
         #endregion
 
@@ -51,8 +61,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         {
             if (reader == null)
                 throw new ArgumentNullException("reader");
-            EntityId = reader.ReadInt32 ();
-            VehicleId = reader.ReadInt32 ();
+            EntityId = reader.ReadInt32();
+            VehicleId = reader.ReadInt32();
+            if (version >= 72)
+                Leash = reader.ReadBoolean();
         }
 
         /// <summary>
@@ -69,6 +81,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             writer.Write(Code);
             writer.Write(EntityId);
             writer.Write(VehicleId);
+            if (version >= 72)
+                writer.Write(Leash);
         }
     }
 }

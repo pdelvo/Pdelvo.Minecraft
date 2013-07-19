@@ -60,6 +60,8 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// </remarks>
         public bool UseWindowTitle { get; set; }
 
+        public int Unknown { get; set; }
+
         /// <summary>
         ///   Receives the specified reader.
         /// </summary>
@@ -75,9 +77,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             InventoryType = reader.ReadByte ();
             WindowTitle = reader.ReadString16 ();
             Slots = reader.ReadByte ();
-
             if (version >= 52)
                 UseWindowTitle = reader.ReadBoolean ();
+            if (InventoryType == 11)
+                Unknown = reader.ReadInt32();
         }
 
         /// <summary>
@@ -99,6 +102,9 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             
             if (version >= 52)
                 writer.Write(UseWindowTitle);
+
+            if (InventoryType == 11)
+                writer.Write(Unknown);
         }
     }
 }

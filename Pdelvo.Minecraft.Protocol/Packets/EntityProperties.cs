@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
@@ -7,53 +8,34 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks>
     /// </remarks>
-    [PacketUsage(PacketUsage.ServerToClient)]
-    public class UpdateHealth : Packet
+    public class EntityProperties : Packet, IEntityPacket
     {
-        /// <summary>
-        ///   Initializes a new instance of the <see cref="UpdateHealth" /> class.
-        /// </summary>
-        /// <remarks>
-        /// </remarks>
-        public UpdateHealth()
-        {
-            Code = 0x08;
-        }
+        #region IEntityPacket Members
 
         /// <summary>
-        ///   Gets or sets the health.
+        ///   Gets or sets the entity Id.
         /// </summary>
-        /// <value> The health. </value>
+        /// <value> The entity Id. </value>
         /// <remarks>
         /// </remarks>
-        public float Health
+        public int EntityId
         {
             get;
             set;
         }
 
-        /// <summary>
-        ///   Gets or sets the food.
-        /// </summary>
-        /// <value> The food. </value>
-        /// <remarks>
-        /// </remarks>
-        public short Food
-        {
-            get;
-            set;
-        }
+        #endregion 
+
+        public IDictionary<string, double> Properties { get; set; } 
 
         /// <summary>
-        ///   Gets or sets the food saturation.
+        ///   Initializes a new instance of the <see cref="EmptyPacket" /> class.
         /// </summary>
-        /// <value> The food saturation. </value>
         /// <remarks>
         /// </remarks>
-        public float FoodSaturation
+        public EntityProperties()
         {
-            get;
-            set;
+            Code = 0x2C;
         }
 
         /// <summary>
@@ -67,9 +49,16 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         {
             if (reader == null)
                 throw new ArgumentNullException("reader");
-            Health = version >= 72 ? reader.ReadSingle() : reader.ReadInt16();
-            Food = reader.ReadInt16();
-            FoodSaturation = reader.ReadSingle();
+
+            EntityId = reader.ReadInt32();
+
+            var count = reader.ReadInt32();
+
+            Properties = new Dictionary<string, double>();
+            for (int i = 0; i < count; i++)
+            {
+                Properties.Add(reader.ReadString16(), reader.ReadDouble());
+            }
         }
 
         /// <summary>
@@ -84,12 +73,16 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (writer == null)
                 throw new ArgumentNullException("writer");
             writer.Write(Code);
-            if (version >= 72)
-                writer.Write(Health);
-            else
-                writer.Write((short) Health);
-            writer.Write(Food);
-            writer.Write(FoodSaturation);
+
+            Properties = Properties ?? new Dictionary<string, double>();
+
+            writer.Write(Properties.Count);
+
+            foreach (var property in Properties)
+            {
+                writer.Write(property.Key);
+                writer.Write(property.Value);
+            }
         }
     }
 }

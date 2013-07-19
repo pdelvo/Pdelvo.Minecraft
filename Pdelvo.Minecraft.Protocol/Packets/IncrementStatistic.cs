@@ -1,4 +1,5 @@
 using System;
+using System.Net.NetworkInformation;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
@@ -34,7 +35,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
         /// <value> The amount. </value>
         /// <remarks>
         /// </remarks>
-        public byte Amount { get; set; }
+        public int Amount { get; set; }
 
         /// <summary>
         ///   Receives the specified reader.
@@ -48,7 +49,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
             if (reader == null)
                 throw new ArgumentNullException("reader");
             StatisticId = reader.ReadInt32 ();
-            Amount = reader.ReadByte ();
+            Amount = version >=72 ? reader.ReadInt32() : reader.ReadByte ();
         }
 
         /// <summary>
@@ -64,7 +65,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new ArgumentNullException("writer");
             writer.Write(Code);
             writer.Write(StatisticId);
-            writer.Write(Amount);
+            if (version >= 72)
+                writer.Write(Amount);
+            else
+                writer.Write((byte) Amount);
         }
     }
 }
