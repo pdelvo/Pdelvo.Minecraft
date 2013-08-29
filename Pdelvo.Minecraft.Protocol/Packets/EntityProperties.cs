@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Pdelvo.Minecraft.Network;
 
 namespace Pdelvo.Minecraft.Protocol.Packets
@@ -8,6 +9,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
     /// </summary>
     /// <remarks>
     /// </remarks>
+    [PacketUsage(PacketUsage.ServerToClient)]
     public class EntityProperties : Packet, IEntityPacket
     {
         #region IEntityPacket Members
@@ -26,7 +28,7 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
         #endregion 
 
-        public IDictionary<string, double> Properties { get; set; } 
+        public List<PropertyData> Properties { get; set; } 
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="EmptyPacket" /> class.
@@ -54,10 +56,10 @@ namespace Pdelvo.Minecraft.Protocol.Packets
 
             var count = reader.ReadInt32();
 
-            Properties = new Dictionary<string, double>();
+            Properties = new List<PropertyData>();
             for (int i = 0; i < count; i++)
             {
-                Properties.Add(reader.ReadString16(), reader.ReadDouble());
+                Properties.Add(PropertyData.Read(reader));
             }
         }
 
@@ -74,14 +76,93 @@ namespace Pdelvo.Minecraft.Protocol.Packets
                 throw new ArgumentNullException("writer");
             writer.Write(Code);
 
-            Properties = Properties ?? new Dictionary<string, double>();
+            writer.Write(EntityId);
+
+            Properties = Properties ?? new List<PropertyData>();
 
             writer.Write(Properties.Count);
 
             foreach (var property in Properties)
             {
-                writer.Write(property.Key);
-                writer.Write(property.Value);
+                property.Write(writer);
+            }
+        }
+
+        public class PropertyData
+        {
+            public string Key { get; set; }
+            public double Value { get; set; }
+            public List<ModifierData> InnerData { get; set; } 
+
+            public static PropertyData Read(BigEndianStream stream)
+            {
+                var data = new PropertyData
+                    {
+                        Key = stream.ReadString16(),
+                        Value = stream.ReadDouble(),
+                        InnerData = new List<ModifierData>()
+                    };
+
+                var length = stream.ReadInt16();
+                for (int i = 0; i < length; i++)
+                {
+                    data.InnerData.Add(ModifierData.Read(stream));
+                }
+                return data;
+            }
+
+            public void Write(BigEndianStream stream)
+            {
+                stream.Write(Key);
+                stream.Write(Value);
+                stream.Write((short)InnerData.Count);
+
+                foreach (var modifierData in InnerData)
+                {
+                    modifierData.Write(stream);
+                }
+            }
+        }
+
+        public class ModifierData
+        {
+            public Uuid Id { get; set; }
+            public double Amount { get; set; }
+            public byte Operation { get; set; }
+
+            public static ModifierData Read(BigEndianStream stream)
+            {
+                return new ModifierData
+                    {
+                        Id = new Uuid(stream),
+                        Amount = stream.ReadDouble(),
+                        Operation = stream.ReadByte()
+                    };
+            }
+
+            public void Write(BigEndianStream stream)
+            {
+                Id.Write(stream);
+                stream.Write(Amount);
+                stream.Write(Operation);
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Uuid
+        {
+            public Uuid(BigEndianStream stream)
+            {
+                High = stream.ReadInt64();
+                Low = stream.ReadInt64();
+            }
+            public long High;
+            public long Low;
+
+            public void Write(BigEndianStream stream)
+            {
+                stream.Write(High);
+                stream.Write(Low);
             }
         }
     }

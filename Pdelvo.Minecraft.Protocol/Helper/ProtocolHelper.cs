@@ -66,7 +66,6 @@ namespace Pdelvo.Minecraft.Protocol.Helper
             foreach (Type item in possiblePackets)
             {
                 var usage = item.GetCustomAttribute<PacketUsageAttribute> ();
-
                 if ((usage.PacketUsage & packetUsage) == packetUsage)
                 {
                     var packet = (Packet) Activator.CreateInstance(item);
